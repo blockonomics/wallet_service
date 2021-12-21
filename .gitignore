@@ -1,0 +1,6 @@
+wallets/wallet_*
+debug.log*
+__pycache__/
+electrum/
+secp256k1/
+venv/
