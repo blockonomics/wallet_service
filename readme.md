@@ -2,7 +2,7 @@
 
 ### Requirements:
 
-- Python >= 3.6
+- Python >= 3.7
 - Electrum 4.1.5
 
 ### Installation
@@ -13,3 +13,13 @@ Use virtual environment
     * `git clone git://github.com/spesmilo/electrum.git`
     * `cd electrum`
     * `python -m pip install .[fast]`
+2. Install required PIP packages:
+    * sqlalchemy
+    * requests
+    * sanic
+
+### Usage
+
+To start the REST API server: `python wallet_service_api.py`
+
+To get CLI help text: `python wallet_service_cli.py -h` 
