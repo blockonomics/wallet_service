@@ -266,8 +266,33 @@ class APICmdUtil:
   @classmethod
   async def presend(cls, addr, btc_amount, wallet_id, wallet_password, api_password):
     cmd_manager = await cls._init_cmd_manager()
-    total_fee = await cls._estimate_single_tx_fee(cmd_manager, addr, btc_amount, wallet_id, wallet_password)
-    return total_fee
+    wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
+    this_tx_size = cmd_manager.estimate_tx_size(wallet, wallet_password, addr, btc_amount)
+    with DbManager() as db_manager:
+      unsent = db_manager.get_unsent()
+    
+    outputs = []
+    outputs.append([addr, btc_amount])
+    tx_total_size = this_tx_size
+    total_amount = btc_amount
+
+    if unsent:
+      for tx in unsent:
+        tx_total_size += tx.tx_size
+        total_amount += tx.amount
+        outputs.append([tx.address, tx.amount])
+
+    cmd_manager.network.update_fee_estimates()
+    fee_estimates = cmd_manager.network.get_fee_estimates()
+    sat_per_b = (fee_estimates.get(2) / 1000) / 1.0e8
+
+    total_size = cmd_manager.estimate_pay_to_many_size(wallet, wallet_password, outputs)
+    total_fee = total_size * sat_per_b
+
+    tx_proportion = this_tx_size / tx_total_size
+    this_tx_fee = tx_proportion * total_fee
+
+    return this_tx_fee
 
   @classmethod
   async def send(cls, addr, btc_amount, wallet_id, wallet_password, api_password):
