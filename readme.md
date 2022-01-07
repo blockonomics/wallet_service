@@ -17,6 +17,7 @@ Use virtual environment
     * sqlalchemy
     * requests
     * sanic
+3. Init DB `python db_model.py`
 
 ### Usage
 
