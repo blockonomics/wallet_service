@@ -40,14 +40,14 @@ def create_wallet(wallet_password):
 
 def get_wallet_info(wallet_id, wallet_password):
   cmd_manager = ElectrumCmdUtil()
-  wallet = cmd_manager.load_wallet(config['SYSTEM']['wallet_dir'] + '/wallet_' + wallet_id, wallet_password)
+  wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
   xpub = wallet.get_master_public_key()
   seed = wallet.get_seed(wallet_password)
   print('xPub: {}\nSeed: {}'.format(xpub, seed))
 
 def get_wallet_balance(wallet_id, wallet_password):
   cmd_manager = ElectrumCmdUtil()
-  wallet = cmd_manager.load_wallet(config['SYSTEM']['wallet_dir'] + '/wallet_' + wallet_id, wallet_password)
+  wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
   print('Connecting to network and syncing wallet...')
   cmd_manager.wait_for_wallet_sync(wallet, True)
   balance = cmd_manager.get_balance(wallet)
@@ -55,7 +55,7 @@ def get_wallet_balance(wallet_id, wallet_password):
 
 def get_wallet_history(wallet_id, wallet_password):
   cmd_manager = ElectrumCmdUtil()
-  wallet = cmd_manager.load_wallet(config['SYSTEM']['wallet_dir'] + '/wallet_' + wallet_id, wallet_password)
+  wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
   print('Connecting to network and syncing wallet...')
   cmd_manager.wait_for_wallet_sync(wallet, True)
   history = cmd_manager.get_history(wallet)
@@ -65,7 +65,7 @@ def get_wallet_history(wallet_id, wallet_password):
 
 def send_to_address(wallet_id, wallet_password, btc_address, btc_amount):
   cmd_manager = ElectrumCmdUtil()
-  wallet = cmd_manager.load_wallet(config['SYSTEM']['wallet_dir'] + '/wallet_' + wallet_id, wallet_password)
+  wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
   print('Connecting to network and syncing wallet...')
   cmd_manager.send_to(wallet, wallet_password, btc_address, btc_amount)
 
@@ -75,7 +75,7 @@ def get_unused(wallet_id, wallet_password):
       sending test transactions
   '''
   cmd_manager = ElectrumCmdUtil()
-  wallet = cmd_manager.load_wallet(config['SYSTEM']['wallet_dir'] + '/wallet_' + wallet_id, wallet_password)
+  wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
   addr = wallet.get_unused_address()
   print(addr)
 
