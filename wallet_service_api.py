@@ -13,8 +13,11 @@ async def presend(request):
   wallet_password = args.get('wallet_password')
   api_password = args.get('api_password')
 
-  estimated_fee = await APICmdUtil.presend(addr, btc_amount, wallet_id, wallet_password, api_password)
-  return json({"estimated_fee": estimated_fee})
+  try:
+    estimated_fee = await APICmdUtil.presend(addr, btc_amount, wallet_id, wallet_password, api_password)
+    return json({"estimated_fee": '{:.8f}'.format(estimated_fee)})
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
 
 @app.post("/api/send")
 async def send(request):
@@ -25,8 +28,12 @@ async def send(request):
   wallet_password = args.get('wallet_password')
   api_password = args.get('api_password')
   
-  estimated_fee, internal_txid = await APICmdUtil.send(addr, btc_amount, wallet_id, wallet_password, api_password)
-  return json({"estimated_fee": estimated_fee, "internal_txid": internal_txid})
+  try:
+    estimated_fee, internal_txid = await APICmdUtil.send(addr, btc_amount, wallet_id, wallet_password, api_password)
+    return json({"estimated_fee": '{:.8f}'.format(estimated_fee), "internal_txid": internal_txid})
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
+
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=8000, debug=True)
