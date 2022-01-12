@@ -44,6 +44,10 @@ class ElectrumCmdUtil():
     while not self.network.is_connected():
       await asyncio.sleep(1)
 
+  async def wait_for_fee_estimates(self):
+    while not self.network.get_fee_estimates():
+      await asyncio.sleep(1)
+
   def set_logging(self):
     level = logging.INFO
     logging.config.dictConfig({
@@ -103,8 +107,14 @@ class ElectrumCmdUtil():
     seed = self.cmd.getseed(password = wallet_password)
     return seed
 
+  def _get_wallet_path(self, wallet_id):
+    wallet_dir = self.config['SYSTEM']['wallet_dir']
+    if not os.path.isdir(wallet_dir):
+      os.mkdir(wallet_dir)
+    return self.config['SYSTEM']['wallet_dir'] + '/wallet_' + str(wallet_id)
+
   def create_wallet(self, wallet_id, wallet_password):
-    wallet_path = self.config['SYSTEM']['wallet_dir'] + '/wallet_' + str(wallet_id)
+    wallet_path = self._get_wallet_path(wallet_id)
     conf = electrum.SimpleConfig({'wallet_path':wallet_path})
     wallet = electrum.wallet.create_new_wallet(path=wallet_path, config=conf, password=wallet_password)['wallet']
     wallet.synchronize()
@@ -129,7 +139,7 @@ class ElectrumCmdUtil():
       self.stop_network()
 
   def load_wallet(self, wallet_id, wallet_password):
-    wallet_path = self.config['SYSTEM']['wallet_dir'] + '/wallet_' + str(wallet_id)
+    wallet_path = self._get_wallet_path(wallet_id)
     storage = electrum.WalletStorage(wallet_path)
     if not storage.file_exists():
       raise Exception('{} does not exist'.format(wallet_path))
@@ -138,7 +148,7 @@ class ElectrumCmdUtil():
     wallet = electrum.Wallet(db, storage, config=self.conf)
     return wallet
 
-  def estimate_tx_size(self, wallet, wallet_password, destination = None, amount = None, outputs = None):
+  def get_tx_size(self, wallet, wallet_password, destination = None, amount = None, outputs = None):
     try:
       # This is only used to fetch the estimated size of the tx
       tx = self.create_tx(wallet, wallet_password, destination = destination, amount = amount, outputs = outputs)
@@ -239,10 +249,11 @@ class APICmdUtil:
         outputs.append([tx.address, tx.amount])
 
     cmd_manager.network.update_fee_estimates()
+    await cmd_manager.wait_for_fee_estimates()
     fee_estimates = cmd_manager.network.get_fee_estimates()
     sat_per_b = (fee_estimates.get(2) / 1000) / 1.0e8
 
-    total_size = cmd_manager.estimate_tx_size(wallet, wallet_password, outputs = outputs)
+    total_size = cmd_manager.get_tx_size(wallet, wallet_password, outputs = outputs)
     total_fee = total_size * sat_per_b
 
     tx_proportion = this_tx_size / tx_total_size
@@ -257,11 +268,11 @@ class APICmdUtil:
     '''
     cmd_manager = await cls._init_cmd_manager()
     if api_password != cmd_manager.config['USER']['api_password']:
-      raise Exception('API Password is wrong')
+      raise Exception('Incorrect API password')
     wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
-    this_tx_size = cmd_manager.estimate_tx_size(wallet, wallet_password, destination = addr, amount = btc_amount)
+    this_tx_size = cmd_manager.get_tx_size(wallet, wallet_password, destination = addr, amount = btc_amount)
     with DbManager() as db_manager:
-      unsent = db_manager.get_unsent()
+      unsent = db_manager.get_unsent(wallet_id)
     this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, wallet, wallet_password, unsent)
     return this_tx_fee
 
@@ -273,9 +284,9 @@ class APICmdUtil:
     '''
     cmd_manager = await cls._init_cmd_manager()
     if api_password != cmd_manager.config['USER']['api_password']:
-      raise Exception('API Password is wrong')
+      raise Exception('Incorrect API password')
     wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
-    this_tx_size = cmd_manager.estimate_tx_size(wallet, wallet_password, destination = addr, amount = btc_amount)
+    this_tx_size = cmd_manager.get_tx_size(wallet, wallet_password, destination = addr, amount = btc_amount)
     
     db_manager = DbManager()
     obj, unsent = db_manager.insert_transaction(addr, btc_amount, wallet_id, this_tx_size)
