@@ -36,7 +36,7 @@ def create_wallet(wallet_password):
   path, dirs, files = next(os.walk(config['SYSTEM']['wallet_dir']))
   last_id = len(files)
   seed, xpub = cmd_manager.create_wallet(last_id, wallet_password)
-  print('Wallet created\nID: {}\nPassword: {}\nSeed: {}\nxPub: {}'.format(last_id, wallet_password, seed, xpub))
+  print('Wallet created\nID: {}\nPassword: {}\nSeed: {}\nxPub: {}'.format(last_id, wallet_password, xpub, seed))
 
 def get_wallet_info(wallet_id, wallet_password):
   cmd_manager = ElectrumCmdUtil()
@@ -60,6 +60,8 @@ def get_wallet_history(wallet_id, wallet_password):
   cmd_manager.wait_for_wallet_sync(wallet, True)
   history = cmd_manager.get_history(wallet)
   for tx in list(history.items()):
+    if not tx[1]['date']:
+      tx[1]['date'] = 'Waiting for confirmation'
     print('txid: {}, date: {}, amount: {}'\
       .format(tx[1]['txid'], tx[1]['date'], tx[1]['bc_value']))
 
