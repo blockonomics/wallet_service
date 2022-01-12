@@ -1,12 +1,15 @@
 from sanic import Sanic
 from sanic.response import text, json
 from electrum_cmd_util import APICmdUtil
+import utils
 
 app = Sanic("BlockonomicsWalletServiceAPI")
 
 @app.post("/api/presend")
 async def presend(request):
   args = request.json
+  utils.check_params(args, ['addr', 'btc_amount', 'wallet_id', 'wallet_password', 'api_password'])
+
   addr = args.get('addr')
   btc_amount = args.get('btc_amount')
   wallet_id = args.get('wallet_id')
@@ -22,6 +25,8 @@ async def presend(request):
 @app.post("/api/send")
 async def send(request):
   args = request.json
+  utils.check_params(args, ['addr', 'btc_amount', 'wallet_id', 'wallet_password', 'api_password'])
+
   addr = args.get('addr')
   btc_amount = args.get('btc_amount')
   wallet_id = args.get('wallet_id')
