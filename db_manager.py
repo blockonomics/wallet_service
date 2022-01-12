@@ -27,7 +27,7 @@ class DbManager:
     self.session.close()    
 
   def insert_transaction(self, address, amount, wallet_id, tx_size):
-    unsent = self.get_unsent()
+    unsent = self.get_unsent(wallet_id)
     if unsent:
       internal_txid = unsent[0].internal_txid
     else:
@@ -47,8 +47,8 @@ class DbManager:
     self.session.commit()
     return obj, unsent
 
-  def get_unsent(self):
-    return self.session.query(Transactions).filter(Transactions.txid == None).all() 
+  def get_unsent(self, wallet_id):
+    return self.session.query(Transactions).filter(Transactions.txid == None, Transactions.wallet_id == wallet_id).all()
 
   def update_transaction(self, internal_txid, txid):
     objs = self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
