@@ -32,6 +32,7 @@ class ElectrumCmdUtil():
       self.loop = asyncio.get_running_loop()
     except RuntimeError:
       # No loop running
+      logging.info('No event loop, creating')
       self.loop, self.stopping_fut, self.loop_thread = electrum.util.create_and_start_event_loop()
 
   def connect_to_network(self):
@@ -44,6 +45,7 @@ class ElectrumCmdUtil():
 
   async def wait_for_connection(self):
     while not self.network.is_connected():
+      logging.info(self.network.get_status_value('status'))
       await asyncio.sleep(1)
 
   async def wait_for_fee_estimates(self):
@@ -226,20 +228,21 @@ class ElectrumCmdUtil():
 class APICmdUtil:
 
   @classmethod
-  async def _init_cmd_manager(cls, wallet_id = None, wallet_password = None):
+  async def _init_cmd_manager(cls, wallet_id = None, wallet_password = None, network = True):
     cmd_manager = ElectrumCmdUtil()
-    wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
-    cmd_manager.wallet = wallet
-    cmd_manager.wallet_password = wallet_password
-    cmd_manager.get_event_loop()
-    cmd_manager.connect_to_network()
-    await cmd_manager.wait_for_connection()
+    if wallet_id != None:
+      wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
+      cmd_manager.wallet = wallet
+      cmd_manager.wallet_password = wallet_password
+    if network:
+      cmd_manager.get_event_loop()
+      cmd_manager.connect_to_network()
+      await cmd_manager.wait_for_connection()
     return cmd_manager
 
   @classmethod
   async def _get_tx_details(cls, cmd_manager, this_tx_size, addr, btc_amount, unsent):
-    outputs = []
-    outputs.append([addr, btc_amount])
+    outputs = [[addr, btc_amount]]
     tx_total_size = this_tx_size
     total_amount = btc_amount
 
@@ -305,3 +308,16 @@ class APICmdUtil:
 
     return this_tx_fee, internal_txid
 
+  @classmethod
+  async def get_tx(cls, internal_txid):
+    cmd_manager = await cls._init_cmd_manager(network = False)
+    with DbManager() as db_manager:
+      objs = db_manager.get_txs(internal_txid)
+    if not objs:
+      return {}
+    txs = []
+    total_fee = 0
+    for tx in objs:
+      txs.append({'addr': tx.address, 'btc_amount': '{:.8f}'.format(tx.amount / 1.0e8), 'fee': '{:.8f}'.format(tx.fee / 1.0e8) })
+      total_fee += tx.fee
+    return {'txid': objs[0].txid, 'timestamp': objs[0].timestamp_ms, 'outputs': txs, 'fee': '{:.8f}'.format(total_fee / 1.0e8)}

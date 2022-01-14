@@ -39,6 +39,15 @@ async def send(request):
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
 
+@app.get("/api/send/<internal_txid>")
+async def send(request, internal_txid):
+  try:
+    if not internal_txid:
+      raise Exception('Missing param internal_txid')
+    data = await APICmdUtil.get_tx(internal_txid)
+    return json(data)
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=8000, debug=True)
