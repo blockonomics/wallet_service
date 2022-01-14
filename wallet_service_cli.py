@@ -69,7 +69,9 @@ def send_to_address(wallet_id, wallet_password, btc_address, btc_amount):
   cmd_manager = ElectrumCmdUtil()
   wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
   print('Connecting to network and syncing wallet...')
-  cmd_manager.send_to(wallet, wallet_password, btc_address, btc_amount)
+  cmd_manager.wallet = wallet
+  cmd_manager.wallet_password = wallet_password
+  cmd_manager.send_to(btc_address, btc_amount)
 
 def get_unused(wallet_id, wallet_password):
   ''' This command is used to fetch next unused address of a wallet.
