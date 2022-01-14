@@ -33,14 +33,15 @@ class DbManager:
     else:
       internal_txid = str(uuid.uuid4().hex)
 
-    # Only sent transactions have txid and timestamp
+    # Only sent transactions have txid, fee and timestamp
     obj = Transactions(
         internal_txid = internal_txid,
         txid = None,
         address = address,
         amount = amount,
         wallet_id = wallet_id,
-        tx_size = tx_size,
+        relative_tx_size = tx_size,
+        fee = None,
         timestamp_ms = None
       )
     self.session.add(obj)
@@ -50,9 +51,19 @@ class DbManager:
   def get_unsent(self, wallet_id):
     return self.session.query(Transactions).filter(Transactions.txid == None, Transactions.wallet_id == wallet_id).all()
 
-  def update_transaction(self, internal_txid, txid):
+  def get_txs(self, internal_txid):
+    return self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
+
+  def update_transactions(self, internal_txid, txid, total_fee):
     objs = self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
+    # Calculate total relative size of all transactions in this batch
+    # With the total fee and total relative size, we calculate each individual transactions fee
+    # One transaction is proportionally calculated as one tx / total = percent of fee
+    total_relative_size = 0
+    for tx in objs:
+      total_relative_size += tx.relative_tx_size
     for obj in objs:
       obj.txid = txid
+      obj.fee = total_fee * (obj.relative_tx_size / total_relative_size)
       obj.timestamp_ms = int(time.time())
     self.session.commit()
