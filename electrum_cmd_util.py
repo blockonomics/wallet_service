@@ -318,6 +318,10 @@ class APICmdUtil:
     txs = []
     total_fee = 0
     for tx in objs:
-      txs.append({'addr': tx.address, 'btc_amount': '{:.8f}'.format(tx.amount / 1.0e8), 'fee': '{:.8f}'.format(tx.fee / 1.0e8) })
-      total_fee += tx.fee
-    return {'txid': objs[0].txid, 'timestamp': objs[0].timestamp_ms, 'outputs': txs, 'fee': '{:.8f}'.format(total_fee / 1.0e8)}
+      fee = None
+      if tx.fee:
+        fee = '{:.8f}'.format(tx.fee / 1.0e8)
+        total_fee += tx.fee
+      txs.append({'addr': tx.address, 'btc_amount': '{:.8f}'.format(tx.amount / 1.0e8), 'fee': fee })
+    total_fee = '{:.8f}'.format(total_fee / 1.0e8) if total_fee else None
+    return {'txid': objs[0].txid, 'timestamp': objs[0].timestamp_ms, 'outputs': txs, 'fee': total_fee}
