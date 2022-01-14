@@ -13,7 +13,8 @@ class Transactions(Base):
     address = Column(String(250), primary_key = True)
     amount = Column(Integer)
     wallet_id = Column(Integer)
-    tx_size = Column(Integer)
+    relative_tx_size = Column(Integer)
+    fee = Column(Integer)
     timestamp_ms = Column(BigInteger)
 
 Base.metadata.create_all(engine)
