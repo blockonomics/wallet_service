@@ -24,6 +24,8 @@ class ElectrumCmdUtil():
     conf = {'fee_level': self.config['SYSTEM']['fee_level'], 'auto_connect': True}
     self.conf = electrum.SimpleConfig(conf)
     self.cmd = electrum.Commands(config = self.conf)
+    self.wallet = None
+    self.wallet_password = None
 
   def get_event_loop(self):
     try:
@@ -148,18 +150,17 @@ class ElectrumCmdUtil():
     wallet = electrum.Wallet(db, storage, config=self.conf)
     return wallet
 
-  def get_tx_size(self, wallet, wallet_password, destination = None, amount = None, outputs = None):
+  def get_tx_size(self, destination = None, amount = None, outputs = None):
     try:
-      # This is only used to fetch the estimated size of the tx
-      tx = self.create_tx(wallet, wallet_password, destination = destination, amount = amount, outputs = outputs)
+      tx = self.create_tx(destination = destination, amount = amount, outputs = outputs)
       tx = electrum.Transaction(tx)
       tx_size = tx.estimated_size()
-      wallet.remove_transaction(tx.txid())
+      self.wallet.remove_transaction(tx.txid())
       return tx_size
     except Exception as e:
-      raise Exception("Failed to estimate tx size for wallet: {} {}".format(wallet, e))
+      raise Exception("Failed to estimate tx size for wallet: {} {}".format(self.wallet, e))
 
-  def create_tx(self, wallet, wallet_password, destination = None, amount = None, outputs = None):
+  def create_tx(self, destination = None, amount = None, outputs = None, fee = None):
     try:
       final_outputs = []
       if destination and amount:
@@ -169,34 +170,34 @@ class ElectrumCmdUtil():
         for address, amount in outputs:
           amount_sat = electrum.commands.satoshis_or_max(amount)
           final_outputs.append(electrum.transaction.PartialTxOutput.from_address_and_value(address, amount_sat))
-      tx = wallet.create_transaction(
+      tx = self.wallet.create_transaction(
           final_outputs,
-          fee=None,
+          fee=electrum.commands.satoshis(fee),
           feerate=None,
           change_addr=None,
           domain_addr=None,
           domain_coins=None,
           unsigned=False,
           rbf=True,
-          password=wallet_password,
+          password=self.wallet_password,
           locktime=None)
       result = tx.serialize()
       return result
     except Exception as e:
-      raise Exception("Failed to create tx for wallet: {} {}".format(wallet, e))
+      raise Exception("Failed to create tx for wallet: {} {}".format(self.wallet, e))
 
-  def send_to(self, wallet, wallet_password, destination, amount):
-    logging.info("Trying to send full balance of %s", wallet)
-    tx = self.create_tx(wallet, wallet_password, destination = destination, amount = amount)
+  def send_to(self, destination, amount):
+    logging.info("Trying to send full balance of %s", self.wallet)
+    tx = self.create_tx(destination = destination, amount = amount)
     self.get_event_loop()
     self.connect_to_network()
     while not self.network.is_connected():
       print('Connecting...')
       time.sleep(1)      
-    self.broadcast(wallet, tx, amount)
+    self.broadcast(tx, amount)
     self.stop_network()
 
-  def broadcast(self, wallet, tx, amount):
+  def broadcast(self, tx, amount):
     try:
       tx = electrum.Transaction(tx)
       task = asyncio.ensure_future(self.network.broadcast_transaction(tx))
@@ -204,39 +205,39 @@ class ElectrumCmdUtil():
         print('Broadcasting...')
         time.sleep(1)
       task.result()
-      logging.info("Sent {} BTC from {}, txid: {}".format(amount, wallet, tx.txid()))
-      print("Sent {} BTC from {}, txid: {}".format(amount, wallet, tx.txid()))
+      logging.info("Sent {} BTC from {}, txid: {}".format(amount, self.wallet, tx.txid()))
+      print("Sent {} BTC from {}, txid: {}".format(amount, self.wallet, tx.txid()))
     except Exception as e:
       self.stop_network()
-      wallet.remove_transaction(tx.txid())
-      raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(wallet, tx.txid(), e))
+      self.wallet.remove_transaction(tx.txid())
+      raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(self.wallet, tx.txid(), e))
 
-  async def async_broadcast(self, wallet, tx, amount):
+  async def async_broadcast(self, tx, amount):
     try:
       tx = electrum.Transaction(tx)
-      task = asyncio.ensure_future(self.network.broadcast_transaction(tx))
-      while not task.done():
-        print('Broadcasting...')
-        await asyncio.sleep(1)
-      task.result()
-      logging.info("Sent {} BTC from {}, txid: {}".format(amount, wallet, tx.txid()))
-      print("Sent {} BTC from {}, txid: {}".format(amount, wallet, tx.txid()))
+      print('Broadcasting...')
+      await self.network.broadcast_transaction(tx)
+      logging.info("Sent {} BTC from {}, txid: {}".format(amount, self.wallet, tx.txid()))
+      print("Sent {} BTC from {}, txid: {}".format(amount, self.wallet, tx.txid()))
     except Exception as e:
-      wallet.remove_transaction(tx.txid())
-      raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(wallet, tx.txid(), e))
+      self.wallet.remove_transaction(tx.txid())
+      raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(self.wallet, tx.txid(), e))
 
 class APICmdUtil:
 
   @classmethod
-  async def _init_cmd_manager(cls):
+  async def _init_cmd_manager(cls, wallet_id = None, wallet_password = None):
     cmd_manager = ElectrumCmdUtil()
+    wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
+    cmd_manager.wallet = wallet
+    cmd_manager.wallet_password = wallet_password
     cmd_manager.get_event_loop()
     cmd_manager.connect_to_network()
     await cmd_manager.wait_for_connection()
     return cmd_manager
 
   @classmethod
-  async def _get_tx_details(cls, cmd_manager, this_tx_size, addr, btc_amount, wallet, wallet_password, unsent):
+  async def _get_tx_details(cls, cmd_manager, this_tx_size, addr, btc_amount, unsent):
     outputs = []
     outputs.append([addr, btc_amount])
     tx_total_size = this_tx_size
@@ -244,16 +245,16 @@ class APICmdUtil:
 
     if unsent:
       for tx in unsent:
-        tx_total_size += tx.tx_size
+        tx_total_size += tx.relative_tx_size
         total_amount += tx.amount
-        outputs.append([tx.address, tx.amount])
+        outputs.append([tx.address, tx.amount / 1.0e8])
 
     cmd_manager.network.update_fee_estimates()
     await cmd_manager.wait_for_fee_estimates()
     fee_estimates = cmd_manager.network.get_fee_estimates()
     sat_per_b = (fee_estimates.get(2) / 1000) / 1.0e8
 
-    total_size = cmd_manager.get_tx_size(wallet, wallet_password, outputs = outputs)
+    total_size = cmd_manager.get_tx_size(outputs = outputs)
     total_fee = total_size * sat_per_b
 
     tx_proportion = this_tx_size / tx_total_size
@@ -266,14 +267,13 @@ class APICmdUtil:
     '''Create a transaction to estimate fee only, dry run of send. 
       Fee level estimates for one transaction is proportionally calculated as one tx / total = percent of fee
     '''
-    cmd_manager = await cls._init_cmd_manager()
+    cmd_manager = await cls._init_cmd_manager(wallet_id, wallet_password)
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
-    wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
-    this_tx_size = cmd_manager.get_tx_size(wallet, wallet_password, destination = addr, amount = btc_amount)
+    this_tx_size = cmd_manager.get_tx_size(destination = addr, amount = btc_amount)
     with DbManager() as db_manager:
       unsent = db_manager.get_unsent(wallet_id)
-    this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, wallet, wallet_password, unsent)
+    this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, unsent)
     return this_tx_fee
 
   @classmethod
@@ -282,26 +282,26 @@ class APICmdUtil:
       Fee level estimates for one transaction is calculated as one tx / total = percent of fee
       Continue to batch incoming sends until (tx_fee)/(total amount being sent) is less than percent threshold. Default 5%
     '''
-    cmd_manager = await cls._init_cmd_manager()
+    cmd_manager = await cls._init_cmd_manager(wallet_id, wallet_password)
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
-    wallet = cmd_manager.load_wallet(wallet_id, wallet_password)
-    this_tx_size = cmd_manager.get_tx_size(wallet, wallet_password, destination = addr, amount = btc_amount)
+    this_tx_size = cmd_manager.get_tx_size(destination = addr, amount = btc_amount)
     
     db_manager = DbManager()
-    obj, unsent = db_manager.insert_transaction(addr, btc_amount, wallet_id, this_tx_size)
+    obj, unsent = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), wallet_id, this_tx_size)
     
     internal_txid = obj.internal_txid
 
-    this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, wallet, wallet_password, unsent)
+    this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, unsent)
     batching_threshold = int(cmd_manager.config['USER']['batching_threshold']) / 100
     fee_to_amount_proportion = total_fee / total_amount
 
     if batching_threshold >= fee_to_amount_proportion:
-      tx = cmd_manager.create_tx(wallet, wallet_password, outputs = outputs)
-      await cmd_manager.async_broadcast(wallet, tx, total_amount)
-      db_manager.update_transaction(internal_txid, electrum.Transaction(tx).txid())
+      tx = cmd_manager.create_tx(outputs = outputs, fee = total_fee)
+      await cmd_manager.async_broadcast(tx, total_amount)
+      db_manager.update_transactions(internal_txid, electrum.Transaction(tx).txid(), int(total_fee * 1.0e8))
 
     db_manager.close_session()
 
     return this_tx_fee, internal_txid
+
