@@ -54,6 +54,10 @@ class DbManager:
   def get_txs(self, internal_txid):
     return self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
 
+  def get_all_txs(self, limit):
+    return self.session.query(Transactions.txid, Transactions.timestamp_ms).filter(Transactions.timestamp_ms != None)\
+      .group_by(Transactions.txid, Transactions.timestamp_ms).order_by(Transactions.timestamp_ms).limit(limit).all()
+
   def update_transactions(self, internal_txid, txid, total_fee):
     objs = self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
     # Calculate total relative size of all transactions in this batch

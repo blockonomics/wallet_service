@@ -49,5 +49,14 @@ async def send(request, internal_txid):
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
 
+@app.get("/api/send_history")
+async def send(request):
+  try:
+    limit = request.args.get("limit")
+    data = await APICmdUtil.get_send_history(limit)
+    return json(data)
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
+
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=8000, debug=True)

@@ -325,3 +325,13 @@ class APICmdUtil:
       txs.append({'addr': tx.address, 'btc_amount': '{:.8f}'.format(tx.amount / 1.0e8), 'fee': fee })
     total_fee = '{:.8f}'.format(total_fee / 1.0e8) if total_fee else None
     return {'txid': objs[0].txid, 'timestamp': objs[0].timestamp_ms, 'outputs': txs, 'fee': total_fee}
+
+  @classmethod
+  async def get_send_history(cls, limit):
+    cmd_manager = await cls._init_cmd_manager(network = False)
+    with DbManager() as db_manager:
+      objs = db_manager.get_all_txs(limit)
+    txs = []
+    for tx in objs:
+      txs.append((tx.timestamp_ms, tx.txid))
+    return {'transactions': txs}
