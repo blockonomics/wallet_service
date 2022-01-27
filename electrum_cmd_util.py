@@ -21,7 +21,7 @@ class ElectrumCmdUtil():
     self.network = None
     if self.config['SYSTEM']['use_testnet'] == 'True':
       electrum.constants.set_testnet()
-    conf = {'fee_level': self.config['SYSTEM']['fee_level'], 'auto_connect': True}
+    conf = {'fee_level': int(self.config['SYSTEM']['fee_level']), 'auto_connect': True}
     self.conf = electrum.SimpleConfig(conf)
     self.cmd = electrum.Commands(config = self.conf)
     self.wallet = None
@@ -254,11 +254,12 @@ class APICmdUtil:
 
     cmd_manager.network.update_fee_estimates()
     await cmd_manager.wait_for_fee_estimates()
+
     fee_estimates = cmd_manager.network.get_fee_estimates()
     sat_per_b = (fee_estimates.get(2) / 1000) / 1.0e8
 
     total_size = cmd_manager.get_tx_size(outputs = outputs)
-    total_fee = total_size * sat_per_b
+    total_fee = cmd_manager.conf.estimate_fee(total_size, allow_fallback_to_static_rates = True) / 1.0e8
 
     tx_proportion = this_tx_size / tx_total_size
     this_tx_fee = tx_proportion * total_fee
