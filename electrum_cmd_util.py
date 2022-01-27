@@ -154,7 +154,8 @@ class ElectrumCmdUtil():
 
   def get_tx_size(self, destination = None, amount = None, outputs = None):
     try:
-      tx = self.create_tx(destination = destination, amount = amount, outputs = outputs)
+      # Fee here does not matter, but we have to provide it if not dynamic fee is available at the moment
+      tx = self.create_tx(destination = destination, amount = amount, outputs = outputs, fee = 0.00000001)
       tx = electrum.Transaction(tx)
       tx_size = tx.estimated_size()
       self.wallet.remove_transaction(tx.txid())
@@ -292,7 +293,10 @@ class APICmdUtil:
     this_tx_size = cmd_manager.get_tx_size(destination = addr, amount = btc_amount)
     
     db_manager = DbManager()
-    obj, unsent = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), wallet_id, this_tx_size)
+    try:
+      obj, unsent = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), wallet_id, this_tx_size)
+    except Exception:
+      raise Exception('Address {} already has a transaction in this unsent batch'.format(addr))
     
     internal_txid = obj.internal_txid
 
