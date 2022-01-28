@@ -26,6 +26,15 @@ Use virtual environment
 
 Before using the API, start the server with: `python wallet_service_api.py` Default server will run in localhost PORT 8000
 
+To use the API, use the CLI commands to create a wallet and get or set the API password:
+```
+python wallet_service_api.py getAPIConfig
+python wallet_service_api.py setAPIConfig api_password <password>
+python wallet_service_api.py createWallet <wallet_password>
+```
+
+To get CLI help, run `python wallet_service_api.py -h`
+
 #### POST /api/presend
 Estimate transaction fee, dry run of send. Fee level estimate for one transaction is proportionally calculated as one tx / total = percent of fee
 
