@@ -36,7 +36,7 @@ python wallet_service_api.py createWallet <wallet_password>
 To get CLI help, run `python wallet_service_api.py -h`
 
 #### POST /api/presend
-Estimate transaction fee, dry run of send. Fee level estimate for one transaction is proportionally calculated as one tx / total = percent of fee
+Estimate transaction fee, dry run of send.
 
 **Parameters:**
 `{addr, btc_amount, wallet_id, wallet_password, admin_password}`
@@ -44,11 +44,11 @@ Estimate transaction fee, dry run of send. Fee level estimate for one transactio
 **Response:**
 ```
 estimated_fee : Estimated fee that will be taken for this send (Proportionally calculated)
-error: 500 HTTP Status / “Error msg” (BTC_amount may be more than wallet etc)
+error: 500 HTTP Status / “Error msg”
 ```
 
 #### POST /api/send
-Schedules the transaction to be sent when threshold is met. Fee level estimates for one transaction is calculated as one tx / total = percent of fee
+Schedules the transaction to be sent when threshold is met.
 
 **Parameters:**
 `{addr, btc_amount, wallet_id, wallet_password, admin_password}`
