@@ -82,7 +82,7 @@ Array of (timestamp, bitcoin_txids) sorted in descending order
 Use CLI to get current values of config or change them:
 ```
 python wallet_service_api.py getAPIConfig
-python wallet_service_api.py setAPIConfig <paran> <value>
+python wallet_service_api.py setAPIConfig <param> <value>
 ```
 Available configs are:
 * **api_password**: Password to be used for HTTP API calls - generated randomly by default
