@@ -76,3 +76,15 @@ Return the history of sends that happened
 
 **Response:**
 Array of (timestamp, bitcoin_txids) sorted in descending order
+
+### API Config
+
+Use CLI to get current values of config or change them:
+```
+python wallet_service_api.py getAPIConfig
+python wallet_service_api.py setAPIConfig api_password <password>
+```
+Available configs are:
+* **api_password**: Password to be used for HTTP API calls - generated randomly by default
+* **batching_threshold** : Continue to batch incoming sends until this percent threshold is met, default 5%. Threshold is calculated as (tx_fee)/(total amount being sent)
+
