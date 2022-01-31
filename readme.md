@@ -56,7 +56,7 @@ Schedules the transaction to be sent when threshold is met.
 **Response:**
 ```
 estimated_fee: Estimated weighted fee for this send 
-srid: send request id (unique internal id to track this send)  
+sr_id: send request id (unique internal id to track this send)  
 error: 500 HTTP Status / “Error msg”
 ```
 
