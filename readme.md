@@ -43,7 +43,7 @@ Estimate transaction fee, dry run of send.
 
 **Response:**
 ```
-estimated_fee : Estimated weighted fee that will be taken for this send 
+estimated_fee : Estimated weighted fee for this send 
 error: 500 HTTP Status / “Error msg”
 ```
 
@@ -55,8 +55,8 @@ Schedules the transaction to be sent when threshold is met.
 
 **Response:**
 ```
-estimated_fee: Estimated weighted fee that will be taken for this send 
-srid: send request id. Unique internal id to track this send  
+estimated_fee: Estimated weighted  for this send 
+srid: send request id (unique internal id to track this send)  
 error: 500 HTTP Status / “Error msg”
 ```
 
@@ -64,7 +64,7 @@ error: 500 HTTP Status / “Error msg”
 
 **Response:**
 ```
-estimated_fee: Estimated weighted fee that will be taken for this send 
+estimated_fee: Estimated weighted fee for this send 
 tx_id: Bitcoin transaction id of this send if it has been sent 
 timestamp: Timestamp of this send request (in unix milliseconds)
 addr: Bitcoin Address to send payment to
