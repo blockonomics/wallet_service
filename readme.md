@@ -69,7 +69,7 @@ tx_id: Bitcoin transaction id of this send if it has been sent
 timestamp: Timestamp of this send request (in unix milliseconds)
 addr: Bitcoin Address to send payment to
 amount: Amount of bitcoin to send
-tx_fee: Actual weighted network fee of taken by send
+tx_fee: Actual weighted network fee taken by this send
 ```
 
 #### GET /api/history?limit=1
