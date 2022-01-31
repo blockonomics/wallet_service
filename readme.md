@@ -1,4 +1,4 @@
-#Self hosted bitcoin wallet service
+# Self hosted bitcoin wallet service
 
 ### Requirements:
 
