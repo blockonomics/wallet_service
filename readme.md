@@ -1,4 +1,4 @@
-## Payment Forwarding
+#Self hosted bitcoin wallet service
 
 ### Requirements:
 
