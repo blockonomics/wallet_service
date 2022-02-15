@@ -8,12 +8,11 @@ Base = declarative_base()
 
 class Transactions(Base):
     __tablename__ = 'transactions'
-    internal_txid = Column(String(250), primary_key = True)
+    sr_id = Column(String(250), primary_key = True)
     txid = Column(String(250))
     address = Column(String(250), primary_key = True)
     amount = Column(Integer)
     wallet_id = Column(Integer)
-    relative_tx_size = Column(Integer)
     fee = Column(Integer)
     timestamp_ms = Column(BigInteger)
 
