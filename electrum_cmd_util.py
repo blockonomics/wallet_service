@@ -215,13 +215,13 @@ class ElectrumCmdUtil():
       self.wallet.remove_transaction(tx.txid())
       raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(self.wallet, tx.txid(), e))
 
-  async def async_broadcast(self, tx, amount):
+  async def async_broadcast(self, tx):
     try:
       tx = electrum.Transaction(tx)
       print('Broadcasting...')
       await self.network.broadcast_transaction(tx)
-      logging.info("Sent {} BTC from {}, txid: {}".format(amount, self.wallet, tx.txid()))
-      print("Sent {} BTC from {}, txid: {}".format(amount, self.wallet, tx.txid()))
+      logging.info("Sent from {}, txid: {}".format(self.wallet, tx.txid()))
+      print("Sent from {}, txid: {}".format(self.wallet, tx.txid()))
     except Exception as e:
       self.wallet.remove_transaction(tx.txid())
       raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(self.wallet, tx.txid(), e))
@@ -242,15 +242,17 @@ class APICmdUtil:
     return cmd_manager
 
   @classmethod
-  async def _get_tx_details(cls, cmd_manager, this_tx_size, addr, btc_amount, unsent):
+  async def _get_tx_details(cls, cmd_manager, wallet_id, addr, btc_amount):
     outputs = [[addr, btc_amount]]
-    tx_total_size = this_tx_size
-    total_amount = btc_amount
+    sat_amount = int(btc_amount * 1.0e8)
+    total_sat_amount = sat_amount
+
+    with DbManager() as db_manager:
+      unsent = db_manager.get_unsent(wallet_id)
 
     if unsent:
       for tx in unsent:
-        tx_total_size += tx.relative_tx_size
-        total_amount += tx.amount
+        total_sat_amount += tx.amount
         outputs.append([tx.address, tx.amount / 1.0e8])
 
     cmd_manager.network.update_fee_estimates()
@@ -262,10 +264,10 @@ class APICmdUtil:
     total_size = cmd_manager.get_tx_size(outputs = outputs)
     total_fee = cmd_manager.conf.estimate_fee(total_size, allow_fallback_to_static_rates = True) / 1.0e8
 
-    tx_proportion = this_tx_size / tx_total_size
+    tx_proportion = sat_amount / total_sat_amount
     this_tx_fee = tx_proportion * total_fee
 
-    return this_tx_fee, total_fee, total_amount, outputs
+    return this_tx_fee, total_fee, total_sat_amount, outputs
 
   @classmethod
   async def presend(cls, addr, btc_amount, wallet_id, wallet_password, api_password):
@@ -275,10 +277,7 @@ class APICmdUtil:
     cmd_manager = await cls._init_cmd_manager(wallet_id, wallet_password)
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
-    this_tx_size = cmd_manager.get_tx_size(destination = addr, amount = btc_amount)
-    with DbManager() as db_manager:
-      unsent = db_manager.get_unsent(wallet_id)
-    this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, unsent)
+    this_tx_fee, total_fee, total_sat_amount, outputs = await cls._get_tx_details(cmd_manager, wallet_id, addr, btc_amount)
     return this_tx_fee
 
   @classmethod
@@ -290,46 +289,45 @@ class APICmdUtil:
     cmd_manager = await cls._init_cmd_manager(wallet_id, wallet_password)
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
-    this_tx_size = cmd_manager.get_tx_size(destination = addr, amount = btc_amount)
-    
-    db_manager = DbManager()
-    try:
-      obj, unsent = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), wallet_id, this_tx_size)
-    except Exception:
-      raise Exception('Address {} already has a transaction in this unsent batch'.format(addr))
-    
-    internal_txid = obj.internal_txid
 
-    this_tx_fee, total_fee, total_amount, outputs = await cls._get_tx_details(cmd_manager, this_tx_size, addr, btc_amount, unsent)
+    this_tx_fee, total_fee, total_sat_amount, outputs = await cls._get_tx_details(cmd_manager, wallet_id, addr, btc_amount)
     batching_threshold = int(cmd_manager.config['USER']['batching_threshold']) / 100
-    fee_to_amount_proportion = total_fee / total_amount
+    fee_to_amount_proportion = int(total_fee * 1.0e8) / total_sat_amount
+
+    db_manager = DbManager()
+    obj = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), wallet_id)
+    sr_id = obj.sr_id
 
     if batching_threshold >= fee_to_amount_proportion:
-      tx = cmd_manager.create_tx(outputs = outputs, fee = total_fee)
-      await cmd_manager.async_broadcast(tx, total_amount)
-      db_manager.update_transactions(internal_txid, electrum.Transaction(tx).txid(), int(total_fee * 1.0e8))
-
+      serialized_tx = cmd_manager.create_tx(outputs = outputs, fee = total_fee)
+      tx = electrum.Transaction(serialized_tx)
+      cmd_manager.wallet.add_transaction(tx)
+      cmd_manager.wallet.save_db()
+      try:
+        await cmd_manager.async_broadcast(serialized_tx)
+        db_manager.update_transactions(wallet_id, tx.txid(), total_fee, total_sat_amount)
+      except Exception as e:
+        cmd_manager.wallet.remove_transaction(tx.txid())
+        cmd_manager.wallet.save_db()
+        raise e
     db_manager.close_session()
 
-    return this_tx_fee, internal_txid
+    return this_tx_fee, sr_id
 
   @classmethod
-  async def get_tx(cls, internal_txid):
-    cmd_manager = await cls._init_cmd_manager(network = False)
+  async def get_tx(cls, sr_id):
     with DbManager() as db_manager:
-      objs = db_manager.get_txs(internal_txid)
-    if not objs:
+      obj = db_manager.get_tx(sr_id)
+    if not obj:
       return {}
-    txs = []
-    total_fee = 0
-    for tx in objs:
-      fee = None
-      if tx.fee:
-        fee = '{:.8f}'.format(tx.fee / 1.0e8)
-        total_fee += tx.fee
-      txs.append({'addr': tx.address, 'btc_amount': '{:.8f}'.format(tx.amount / 1.0e8), 'fee': fee })
-    total_fee = '{:.8f}'.format(total_fee / 1.0e8) if total_fee else None
-    return {'txid': objs[0].txid, 'timestamp': objs[0].timestamp_ms, 'outputs': txs, 'fee': total_fee}
+    if obj.txid:
+      result = {'txid': obj.txid, 'timestamp': obj.timestamp_ms,
+     'addr': obj.address, 'btc_amount': '{:.8f}'.format(obj.amount / 1.0e8), 'tx_fee': obj.fee}
+    else:
+      result = {'timestamp': obj.timestamp_ms,
+     'addr': obj.address, 'btc_amount': '{:.8f}'.format(obj.amount / 1.0e8)}
+
+    return result
 
   @classmethod
   async def get_send_history(cls, limit):
@@ -338,5 +336,5 @@ class APICmdUtil:
       objs = db_manager.get_all_txs(limit)
     txs = []
     for tx in objs:
-      txs.append((tx.timestamp_ms, tx.txid))
-    return {'transactions': txs}
+      txs.append((tx.timestamp_ms, tx.sr_id, 'sent' if tx.txid else 'queued'))
+    return txs
