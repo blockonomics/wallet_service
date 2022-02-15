@@ -26,48 +26,35 @@ class DbManager:
   def close_session(self):
     self.session.close()    
 
-  def insert_transaction(self, address, amount, wallet_id, tx_size):
-    unsent = self.get_unsent(wallet_id)
-    if unsent:
-      internal_txid = unsent[0].internal_txid
-    else:
-      internal_txid = str(uuid.uuid4().hex)
-
-    # Only sent transactions have txid, fee and timestamp
+  def insert_transaction(self, address, amount, wallet_id):
+    # Only sent transactions have txid and fee
     obj = Transactions(
-        internal_txid = internal_txid,
+        sr_id = str(uuid.uuid4().hex),
         txid = None,
         address = address,
         amount = amount,
         wallet_id = wallet_id,
-        relative_tx_size = tx_size,
         fee = None,
-        timestamp_ms = None
+        timestamp_ms = int(time.time())
       )
     self.session.add(obj)
     self.session.commit()
-    return obj, unsent
+    return obj
 
   def get_unsent(self, wallet_id):
     return self.session.query(Transactions).filter(Transactions.txid == None, Transactions.wallet_id == wallet_id).all()
 
-  def get_txs(self, internal_txid):
-    return self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
+  def get_tx(self, sr_id):
+    return self.session.query(Transactions).filter(Transactions.sr_id == sr_id).one()
 
   def get_all_txs(self, limit):
-    return self.session.query(Transactions.txid, Transactions.timestamp_ms).filter(Transactions.timestamp_ms != None)\
-      .group_by(Transactions.txid, Transactions.timestamp_ms).order_by(Transactions.timestamp_ms).limit(limit).all()
+    return self.session.query(Transactions.txid, Transactions.timestamp_ms, Transactions.sr_id)\
+      .order_by(Transactions.timestamp_ms).limit(limit).all()
 
-  def update_transactions(self, internal_txid, txid, total_fee):
-    objs = self.session.query(Transactions).filter(Transactions.internal_txid == internal_txid).all()
-    # Calculate total relative size of all transactions in this batch
-    # With the total fee and total relative size, we calculate each individual transactions fee
-    # One transaction is proportionally calculated as one tx / total = percent of fee
-    total_relative_size = 0
-    for tx in objs:
-      total_relative_size += tx.relative_tx_size
+  def update_transactions(self, wallet_id, txid, total_fee, total_amount):
+    objs = self.get_unsent(wallet_id)
+    total_fee_sat = int(total_fee * 1.0e8)
     for obj in objs:
       obj.txid = txid
-      obj.fee = total_fee * (obj.relative_tx_size / total_relative_size)
-      obj.timestamp_ms = int(time.time())
+      obj.fee = int(total_fee_sat * (obj.amount / total_amount))
     self.session.commit()
