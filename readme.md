@@ -1,4 +1,4 @@
-## Payment Forwarding
+# Self hosted bitcoin wallet service
 
 ### Requirements:
 
@@ -43,7 +43,7 @@ Estimate transaction fee, dry run of send.
 
 **Response:**
 ```
-estimated_fee : Estimated fee that will be taken for this send (Proportionally calculated)
+estimated_fee : Estimated fee for this send 
 error: 500 HTTP Status / “Error msg”
 ```
 
@@ -55,27 +55,29 @@ Schedules the transaction to be sent when threshold is met.
 
 **Response:**
 ```
-estimated_fee: Estimated fee that will be taken for this send (Proportionally calculated)
-internal_txid: internal txid to track this send  
+estimated_fee: Estimated weighted fee for this send 
+sr_id: send request id (unique internal id to track this send)  
 error: 500 HTTP Status / “Error msg”
 ```
 
-#### GET /api/send/<internal_txid>
+#### GET /api/detail/<sr_id>
 
 **Response:**
 ```
-txid: Bitcoin txid of internal_txid if already sent  
-timestamp: Timestamp of bitcoin txid broadcast if already sent 
-addr, btc_amount: of this internal_txid
-fee: Actual fee of taken by this internal tx
+estimated_fee: Estimated weighted fee for this send 
+tx_id: Bitcoin transaction id of this send if it has been sent 
+timestamp: Timestamp of this send request (in unix milliseconds)
+addr: Bitcoin Address to send payment to
+amount: Amount of bitcoin to send
+tx_fee: Actual weighted network fee taken by this send
 ```
 
-#### GET /api/send_history?limit=1
+#### GET /api/history?limit=1
 
 Return the history of sends that happened
 
 **Response:**
-Array of (timestamp, bitcoin_txids) sorted in descending order
+Array of (timestamp, sr_id, status) dicts sorted in descending order of timestamp. Status can be *queued* or *sent*
 
 ### API Config
 
