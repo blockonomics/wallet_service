@@ -28,12 +28,12 @@ Before using the API, start the server with: `python wallet_service_api.py` Defa
 
 Before using the API for the first time, use the CLI commands to create a wallet and get or set the API password:
 ```
-python wallet_service_api.py createWallet <wallet_password>
-python wallet_service_api.py getAPIConfig
-python wallet_service_api.py setAPIConfig api_password <password>
+python wallet_service_cli.py createWallet <wallet_password>
+python wallet_service_cli.py getAPIConfig
+python wallet_service_cli.py setAPIConfig api_password <password>
 ```
 
-To get CLI help, run `python wallet_service_api.py -h`
+To get CLI help, run `python wallet_service_cli.py -h`
 
 #### POST /api/presend
 Estimate transaction fee, dry run of send.
