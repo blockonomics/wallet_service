@@ -63,10 +63,10 @@ error: 500 HTTP Status / “Error msg”
 #### GET /api/detail/<sr_id>
 
 **Response:**
-```
-estimated_fee: Estimated weighted fee for this send 
+``` 
 tx_id: Bitcoin transaction id of this send if it has been sent 
-timestamp: Timestamp of this send request (in unix milliseconds)
+sr_timestamp: Timestamp of this send request (in unix milliseconds)
+tx_timestamp: Timestamp of actual bitcoin tx (in unix milliseconds)
 addr: Bitcoin Address to send payment to
 amount: Amount of bitcoin to send
 tx_fee: Actual weighted network fee taken by this send
