@@ -74,10 +74,18 @@ tx_fee: Actual weighted network fee taken by this send
 
 #### GET /api/history?limit=1
 
-Return the history of sends that happened
+Return the history of completed sends
 
 **Response:**
-Array of (timestamp, sr_id, status) dicts sorted in descending order of timestamp. Status can be *queued* or *sent*
+Array of (tx_timestamp, sr_id, tx_id) dicts sorted in descending order of tx_timestamp. Status can be *queued* or *sent*
+
+#### GET /api/queue
+
+Return the current status of send queue
+
+**Response:**
+{sr_ids: list of queued send requests, send_amount: total btc amount scheduled to be sent, fee: total btc estimated required for send, fa_ratio: current fee to amount ratio, fa_ratio_limit: fa_ratio must be below this for send to complete}
+
 
 ### API Config
 
@@ -88,5 +96,7 @@ python wallet_service_api.py setAPIConfig <param> <value>
 ```
 Available configs are:
 * **api_password**: Password to be used for HTTP API calls - generated randomly by default
-* **batching_threshold** : Continue to batch incoming sends until this percent threshold is met, default 5%. Threshold is calculated as (tx_fee)/(total amount being sent)
+* **fa_ratio_min** : Minimum tolerate fee to amount ratio - default 5% 
+* **fa_ratio_max** : Maximum tolerate fee to amount ratio - default 50%
+* **send_frequency** : Send is attempted regularly with this frequency  - default 5 minutes
 
