@@ -84,7 +84,7 @@ Array of (tx_timestamp, sr_id, tx_id) dicts sorted in descending order of tx_tim
 Return the current status of send queue
 
 **Response:**
-{sr_ids: list of queued send requests, send_amount: total btc amount scheduled to be sent, fee: total btc estimated required for send, fa_ratio: current fee to amount ratio, fa_ratio_limit: fa_ratio must be below this for send to complete}
+{sr_ids: list of queued send requests, amount: total btc amount scheduled to be sent, fee: current fee required for send, fa_ratio: current fee to amount ratio, fa_ratio_limit: fa_ratio must be below this for send to complete}
 
 
 ### API Config
