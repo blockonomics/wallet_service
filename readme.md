@@ -77,7 +77,7 @@ tx_fee: Actual weighted network fee taken by this send
 Return the history of completed sends
 
 **Response:**
-Array of (tx_timestamp, sr_id, tx_id) dicts sorted in descending order of tx_timestamp. Status can be *queued* or *sent*
+Array of (tx_timestamp, sr_id, tx_id) dicts sorted in descending order of tx_timestamp.
 
 #### GET /api/queue
 
