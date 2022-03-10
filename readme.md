@@ -96,7 +96,7 @@ python wallet_service_api.py setAPIConfig <param> <value>
 ```
 Available configs are:
 * **api_password**: Password to be used for HTTP API calls - generated randomly by default
-* **fa_ratio_min** : Minimum tolerate fee to amount ratio - default 5% 
-* **fa_ratio_max** : Maximum tolerate fee to amount ratio - default 50%
+* **fa_ratio_min** : Minimum tolerable fee to send amount ratio - default 5% 
+* **fa_ratio_max** : Maximum tolerable fee to send amount ratio - default 50%
 * **send_frequency** : Send is attempted regularly with this frequency  - default 5 minutes
 
