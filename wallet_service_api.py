@@ -1,9 +1,13 @@
 from sanic import Sanic
 from sanic.response import text, json
-from electrum_cmd_util import APICmdUtil
+from electrum_cmd_util import APICmdUtil, ElectrumCmdUtil
+import asyncio
 import utils
+import logging
+import time
 
 app = Sanic("BlockonomicsWalletServiceAPI")
+cmd_manager = ElectrumCmdUtil()
 
 @app.post("/api/presend")
 async def presend(request):
@@ -17,14 +21,19 @@ async def presend(request):
     wallet_password = args.get('wallet_password')
     api_password = args.get('api_password')
 
-    estimated_fee = await APICmdUtil.presend(addr, btc_amount, wallet_id, wallet_password, api_password)
+    if api_password != cmd_manager.config['USER']['api_password']:
+      raise Exception('Incorrect API password')
+
+    cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
+
+    estimated_fee = await cmd_util.presend(addr, btc_amount)
     return json({"estimated_fee": '{:.8f}'.format(estimated_fee)})
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
 
 @app.post("/api/send")
 async def send(request):
-  try:
+  # try:
     args = request.json
     utils.check_params(args, ['addr', 'btc_amount', 'wallet_id', 'wallet_password', 'api_password'])
 
@@ -33,11 +42,16 @@ async def send(request):
     wallet_id = args.get('wallet_id')
     wallet_password = args.get('wallet_password')
     api_password = args.get('api_password')
+
+    if api_password != cmd_manager.config['USER']['api_password']:
+      raise Exception('Incorrect API password')
+
+    cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
   
-    estimated_fee, sr_id = await APICmdUtil.send(addr, btc_amount, wallet_id, wallet_password, api_password)
+    estimated_fee, sr_id = await cmd_util.send(addr, btc_amount)
     return json({"estimated_fee": '{:.8f}'.format(estimated_fee), "sr_id": sr_id})
-  except Exception as e:
-    return json({"error": '{}'.format(e)}, status = 500)
+  # except Exception as e:
+  #   return json({"error": '{}'.format(e)}, status = 500)
 
 @app.get("/api/detail/<sr_id>")
 async def send(request, sr_id):
@@ -57,6 +71,28 @@ async def send(request):
     return json(data)
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
+
+@app.listener("after_server_start")
+async def server_start_listener(app, loop):
+  # Once server is running, grab the loop of the server and start
+  # Bitcoin network
+  asyncio.ensure_future(main_loop())
+  cmd_manager.get_event_loop()
+  cmd_manager.connect_to_network()
+
+async def main_loop():
+  last_batch_send_try = int(time.time())
+  cmd_util = APICmdUtil(cmd_manager)
+  while True:
+    try:
+      await cmd_manager.log_network_status()
+      current_time = int(time.time())
+      if current_time - last_batch_send_try > int(cmd_manager.config['USER']['send_frequency']) * 60:
+        last_batch_send_try = current_time
+        await cmd_util.send_batch()
+    except Exception as e:
+      logging.error("%s", e)
+    await asyncio.sleep(10)
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=8000, debug=True)
