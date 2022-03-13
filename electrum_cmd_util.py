@@ -5,6 +5,7 @@ import time
 import asyncio
 import logging
 import logging.config
+import cryptocode
 from threading import Thread
 from hashlib import sha256
 from db_manager import DbManager
@@ -258,7 +259,7 @@ class APICmdUtil:
     this_tx_fee = tx_proportion * total_fee
     return this_tx_fee
 
-  async def _get_details_of_unsent(self, addr = None, btc_amount = None):
+  async def _get_details_of_unsent(self, addr = None, btc_amount = None, set_password = False):
     if addr:
       total_amount = int(btc_amount * 1.0e8)
       outputs = [[addr, btc_amount]]
@@ -271,6 +272,10 @@ class APICmdUtil:
 
     if not unsent and not total_amount:
       return None, None, None
+
+    if set_password:
+      wallet_password = cryptocode.decrypt(unsent[0].wallet_password, unsent[0].sr_id)
+      self.cmd_manager.set_wallet(self.wallet_id, wallet_password)
 
     for tx in unsent:
       total_amount += tx.amount
@@ -296,7 +301,7 @@ class APICmdUtil:
     this_tx_fee = await self._get_tx_weighted_fee(addr, btc_amount)
 
     with DbManager() as db_manager:
-      obj = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), self.wallet_id)
+      obj = db_manager.insert_transaction(addr, int(btc_amount * 1.0e8), self.wallet_id, self.cmd_manager.wallet_password)
       sr_id = obj.sr_id
 
     return this_tx_fee, sr_id
@@ -305,9 +310,8 @@ class APICmdUtil:
     wallets = os.listdir('./'+self.cmd_manager.config['SYSTEM']['wallet_dir'])
     for wallet in wallets:
       self.wallet_id = wallet.split('_')[1]
-      self.cmd_manager.set_wallet(self.wallet_id, 'abcd')
 
-      total_amount, total_size, total_fee = await self._get_details_of_unsent()
+      total_amount, total_size, total_fee = await self._get_details_of_unsent(set_password = True)
       if not total_amount:
         logging.info('No transactions queued in batch')
         return
@@ -334,7 +338,6 @@ class APICmdUtil:
 
     if current_fa_ratio * 2 <= int(self.cmd_manager.config['USER']['fa_ratio_max']) / 100:
       self.threshold_multiplier *= 2 if self.threshold_multiplier != 1 else 2
-      logging.info(self.threshold_multiplier)
 
   @classmethod
   async def get_tx(cls, sr_id):

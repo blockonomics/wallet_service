@@ -15,5 +15,6 @@ class Transactions(Base):
     wallet_id = Column(Integer)
     fee = Column(Integer)
     timestamp_ms = Column(BigInteger)
+    wallet_password = Column(String(2000))
 
 Base.metadata.create_all(engine)

@@ -33,7 +33,7 @@ async def presend(request):
 
 @app.post("/api/send")
 async def send(request):
-  # try:
+  try:
     args = request.json
     utils.check_params(args, ['addr', 'btc_amount', 'wallet_id', 'wallet_password', 'api_password'])
 
@@ -50,8 +50,8 @@ async def send(request):
   
     estimated_fee, sr_id = await cmd_util.send(addr, btc_amount)
     return json({"estimated_fee": '{:.8f}'.format(estimated_fee), "sr_id": sr_id})
-  # except Exception as e:
-  #   return json({"error": '{}'.format(e)}, status = 500)
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
 
 @app.get("/api/detail/<sr_id>")
 async def send(request, sr_id):

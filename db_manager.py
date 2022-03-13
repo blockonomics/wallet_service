@@ -5,6 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from db_model import Transactions
 import time
 import uuid
+import cryptocode
 
 class DbManager:
 
@@ -26,16 +27,18 @@ class DbManager:
   def close_session(self):
     self.session.close()    
 
-  def insert_transaction(self, address, amount, wallet_id):
+  def insert_transaction(self, address, amount, wallet_id, wallet_password):
     # Only sent transactions have txid and fee
+    sr_id = str(uuid.uuid4().hex)
     obj = Transactions(
-        sr_id = str(uuid.uuid4().hex),
+        sr_id = sr_id,
         txid = None,
         address = address,
         amount = amount,
         wallet_id = wallet_id,
         fee = None,
-        timestamp_ms = int(time.time())
+        timestamp_ms = int(time.time()),
+        wallet_password = cryptocode.encrypt(wallet_password, sr_id)
       )
     self.session.add(obj)
     self.session.commit()
