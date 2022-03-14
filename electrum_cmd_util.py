@@ -323,18 +323,27 @@ class APICmdUtil:
         .format(wallet, current_fa_ratio, fee_to_amount_proportion))
 
       if current_fa_ratio >= fee_to_amount_proportion:
-        serialized_tx = self.cmd_manager.create_tx(outputs = outputs, fee = total_fee)
-        tx = electrum.Transaction(serialized_tx)
-        self.cmd_manager.wallet.add_transaction(tx)
-        self.cmd_manager.wallet.save_db()
-        try:
-          await self.cmd_manager.async_broadcast(serialized_tx)
-          db_manager.update_transactions(self.wallet_id, tx.txid(), total_fee, total_amount)
-          self.threshold_multiplier = 1
-        except Exception as e:
-          self.cmd_manager.wallet.remove_transaction(tx.txid())
+
+        with DbManager() as db_manager:
+          unsent = db_manager.get_unsent(self.wallet_id)
+
+          outputs = []
+
+          for tx in unsent:
+            outputs.append([tx.address, tx.amount / 1.0e8])
+
+          serialized_tx = self.cmd_manager.create_tx(outputs = outputs, fee = total_fee)
+          tx = electrum.Transaction(serialized_tx)
+          self.cmd_manager.wallet.add_transaction(tx)
           self.cmd_manager.wallet.save_db()
-          raise e
+          try:
+            await self.cmd_manager.async_broadcast(serialized_tx)
+            db_manager.update_transactions(self.wallet_id, tx.txid(), total_fee, total_amount)
+            self.threshold_multiplier = 1
+          except Exception as e:
+            self.cmd_manager.wallet.remove_transaction(tx.txid())
+            self.cmd_manager.wallet.save_db()
+            raise e
 
     if current_fa_ratio * 2 <= int(self.cmd_manager.config['USER']['fa_ratio_max']) / 100:
       self.threshold_multiplier *= 2 if self.threshold_multiplier != 1 else 2
@@ -346,20 +355,19 @@ class APICmdUtil:
     if not obj:
       return {}
     if obj.txid:
-      result = {'txid': obj.txid, 'timestamp': obj.timestamp_ms,
-     'addr': obj.address, 'btc_amount': '{:.8f}'.format(obj.amount / 1.0e8), 'tx_fee': obj.fee}
+      result = {'txid': obj.txid, 'sr_timestamp': obj.sr_timestamp, 'tx_timestamp': obj.tx_timestamp,
+     'addr': obj.address, 'amount': '{:.8f}'.format(obj.amount / 1.0e8), 'tx_fee': obj.fee}
     else:
-      result = {'timestamp': obj.timestamp_ms,
-     'addr': obj.address, 'btc_amount': '{:.8f}'.format(obj.amount / 1.0e8)}
+      result = {'sr_timestamp': obj.sr_timestamp,
+     'addr': obj.address, 'amount': '{:.8f}'.format(obj.amount / 1.0e8)}
 
     return result
 
   @classmethod
   async def get_send_history(cls, limit):
-    cmd_manager = await cls._init_cmd_manager(network = False)
     with DbManager() as db_manager:
-      objs = db_manager.get_all_txs(limit)
+      objs = db_manager.get_sent_txs(limit)
     txs = []
     for tx in objs:
-      txs.append((tx.timestamp_ms, tx.sr_id, 'sent' if tx.txid else 'queued'))
+      txs.append((tx.tx_timestamp, tx.sr_id, tx.txid))
     return txs
