@@ -54,7 +54,7 @@ async def send(request):
     return json({"error": '{}'.format(e)}, status = 500)
 
 @app.get("/api/detail/<sr_id>")
-async def send(request, sr_id):
+async def detail(request, sr_id):
   try:
     if not sr_id:
       raise Exception('Missing param sr_id')
@@ -64,7 +64,7 @@ async def send(request, sr_id):
     return json({"error": '{}'.format(e)}, status = 500)
 
 @app.get("/api/history")
-async def send(request):
+async def history(request):
   try:
     limit = request.args.get("limit")
     data = await APICmdUtil.get_send_history(limit)
