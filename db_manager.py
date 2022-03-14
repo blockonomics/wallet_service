@@ -37,7 +37,8 @@ class DbManager:
         amount = amount,
         wallet_id = wallet_id,
         fee = None,
-        timestamp_ms = int(time.time()),
+        sr_timestamp = int(time.time()),
+        tx_timestamp = None,
         wallet_password = cryptocode.encrypt(wallet_password, sr_id)
       )
     self.session.add(obj)
@@ -51,8 +52,12 @@ class DbManager:
     return self.session.query(Transactions).filter(Transactions.sr_id == sr_id).one()
 
   def get_all_txs(self, limit):
-    return self.session.query(Transactions.txid, Transactions.timestamp_ms, Transactions.sr_id)\
-      .order_by(Transactions.timestamp_ms).limit(limit).all()
+    return self.session.query(Transactions.txid, Transactions.sr_timestamp, Transactions.sr_id)\
+      .order_by(Transactions.sr_timestamp).limit(limit).all()
+
+  def get_sent_txs(self, limit):
+    return self.session.query(Transactions.txid, Transactions.tx_timestamp, Transactions.sr_id)\
+      .filter(Transactions.txid != None).order_by(Transactions.tx_timestamp).limit(limit).all()
 
   def update_transactions(self, wallet_id, txid, total_fee, total_amount):
     objs = self.get_unsent(wallet_id)
@@ -60,4 +65,5 @@ class DbManager:
     for obj in objs:
       obj.txid = txid
       obj.fee = int(total_fee_sat * (obj.amount / total_amount))
+      obj.tx_timestamp = int(time.time())
     self.session.commit()
