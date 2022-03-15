@@ -20,6 +20,7 @@ Use virtual environment
     * sqlalchemy
     * requests
     * sanic
+    * cryptocode
 4. Init DB `python db_model.py`
 
 ### API
