@@ -8,6 +8,7 @@ import time
 
 app = Sanic("BlockonomicsWalletServiceAPI")
 cmd_manager = ElectrumCmdUtil()
+cmd_util = APICmdUtil(cmd_manager)
 
 @app.post("/api/presend")
 async def presend(request):
@@ -24,9 +25,9 @@ async def presend(request):
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
 
-    cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
+    post_cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
 
-    estimated_fee = await cmd_util.presend(addr, btc_amount)
+    estimated_fee = await post_cmd_util.presend(addr, btc_amount)
     return json({"estimated_fee": '{:.8f}'.format(estimated_fee)})
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
@@ -46,9 +47,9 @@ async def send(request):
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
 
-    cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
+    post_cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
   
-    estimated_fee, sr_id = await cmd_util.send(addr, btc_amount)
+    estimated_fee, sr_id = await post_cmd_util.send(addr, btc_amount)
     return json({"estimated_fee": '{:.8f}'.format(estimated_fee), "sr_id": sr_id})
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
@@ -72,6 +73,14 @@ async def history(request):
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
 
+@app.get("/api/queue")
+async def queue(request):
+  try:
+    data = await APICmdUtil.get_queue(cmd_util)
+    return json(data)
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
+
 @app.listener("after_server_start")
 async def server_start_listener(app, loop):
   # Once server is running, grab the loop of the server and start
@@ -82,9 +91,11 @@ async def server_start_listener(app, loop):
 
 async def main_loop():
   last_batch_send_try = int(time.time())
-  cmd_util = APICmdUtil(cmd_manager)
   while True:
     try:
+      cmd_util.last_batch = last_batch_send_try
+      # Re-read config in case of any updates
+      cmd_manager.config.read(cmd_manager.config_file)
       await cmd_manager.log_network_status()
       current_time = int(time.time())
       if current_time - last_batch_send_try > int(cmd_manager.config['USER']['send_frequency']) * 60:

@@ -17,6 +17,7 @@ class ElectrumCmdUtil():
 
   def __init__(self):
     self.set_logging()
+    self.config_file = CONFIG_FILE
     self.config = configparser.ConfigParser()
     self.config.read(CONFIG_FILE)
     self.network = None
@@ -236,10 +237,9 @@ class ElectrumCmdUtil():
   async def async_broadcast(self, tx):
     try:
       tx = electrum.Transaction(tx)
-      print('Broadcasting...')
+      logging.info('Trying to broadcast {}...'.format(tx.txid()))
       await self.network.broadcast_transaction(tx)
-      logging.info("Sent from {}, txid: {}".format(self.wallet, tx.txid()))
-      print("Sent from {}, txid: {}".format(self.wallet, tx.txid()))
+      logging.info("{} sent txid: {}".format(self.wallet, tx.txid()))
     except Exception as e:
       self.wallet.remove_transaction(tx.txid())
       raise Exception("Failed to broadcast wallet: {} tx: {} {}".format(self.wallet, tx.txid(), e))
@@ -249,6 +249,7 @@ class APICmdUtil:
   def __init__(self, cmd_manager, wallet_id = None, wallet_password = None):
     self.cmd_manager = cmd_manager
     self.threshold_multiplier = 1
+    self.last_batch = None
     if wallet_id != None:
       self.wallet_id = wallet_id
       self.cmd_manager.set_wallet(wallet_id, wallet_password)
@@ -307,14 +308,19 @@ class APICmdUtil:
     return this_tx_fee, sr_id
 
   async def send_batch(self):
+    ''' Check if batch meets fee to send ratio. In case ratio is met
+        create and broadcast the transaction, record changes in DB
+        In case of failure in broadcast, delete transaction from wallet
+        history to avoid missing utxo errors
+    '''
     wallets = os.listdir('./'+self.cmd_manager.config['SYSTEM']['wallet_dir'])
     for wallet in wallets:
       self.wallet_id = wallet.split('_')[1]
 
       total_amount, total_size, total_fee = await self._get_details_of_unsent(set_password = True)
       if not total_amount:
-        logging.info('No transactions queued in batch')
-        return
+        logging.info('{}: No transactions queued'.format(wallet))
+        continue
 
       fee_to_amount_proportion = int(total_fee * 1.0e8) / total_amount
       current_fa_ratio = (int(self.cmd_manager.config['USER']['fa_ratio_min']) / 100) * self.threshold_multiplier
@@ -326,12 +332,9 @@ class APICmdUtil:
 
         with DbManager() as db_manager:
           unsent = db_manager.get_unsent(self.wallet_id)
-
           outputs = []
-
           for tx in unsent:
             outputs.append([tx.address, tx.amount / 1.0e8])
-
           serialized_tx = self.cmd_manager.create_tx(outputs = outputs, fee = total_fee)
           tx = electrum.Transaction(serialized_tx)
           self.cmd_manager.wallet.add_transaction(tx)
@@ -369,5 +372,48 @@ class APICmdUtil:
       objs = db_manager.get_sent_txs(limit)
     txs = []
     for tx in objs:
-      txs.append((tx.tx_timestamp, tx.sr_id, tx.txid))
+      txs.append({
+        'tx_timestamp': tx.tx_timestamp,
+        'sr_id': tx.sr_id,
+        'tx_id': tx.txid
+        })
     return txs
+
+  @classmethod
+  async def get_queue(cls, cmd_util):
+    wallets = os.listdir('./'+cmd_util.cmd_manager.config['SYSTEM']['wallet_dir'])
+    queue = {}
+    for wallet in wallets:
+      cmd_util.wallet_id = wallet.split('_')[1]
+
+      with DbManager() as db_manager:
+        objs = db_manager.get_unsent(cmd_util.wallet_id)
+
+      if not objs:
+        continue
+
+      wallet_password = cryptocode.decrypt(objs[0].wallet_password, objs[0].sr_id)
+      cmd_util.cmd_manager.set_wallet(cmd_util.wallet_id, wallet_password)
+      txs = []
+      outputs = []
+      total_amount = 0
+      total_fee = 0
+      for tx in objs:
+        txs.append(tx.sr_id)
+        total_amount += tx.amount
+        outputs.append([tx.address, tx.amount / 1.0e8])
+
+      total_size = cmd_util.cmd_manager.get_tx_size(outputs = outputs)
+      total_fee = cmd_util.cmd_manager.conf.estimate_fee(total_size, allow_fallback_to_static_rates = True) / 1.0e8
+      fee_to_amount_proportion = int(total_fee * 1.0e8) / total_amount
+
+      queue[wallet] = {
+        'sr_ids': txs,
+        'amount': '{:.8f}'.format(total_amount / 1.0e8),
+        'fee': '{:.8f}'.format(total_fee),
+        'fa_ratio': (int(cmd_util.cmd_manager.config['USER']['fa_ratio_min']) / 100) * cmd_util.threshold_multiplier,
+        'fa_ratio_limit': fee_to_amount_proportion,
+        'next_send_attempt_in': int(cmd_util.cmd_manager.config['USER']['send_frequency']) * 60 - (int(time.time()) - cmd_util.last_batch)
+      }
+
+    return queue
