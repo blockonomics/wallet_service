@@ -94,6 +94,8 @@ async def main_loop():
   while True:
     try:
       cmd_util.last_batch = last_batch_send_try
+      cmd_util.fa_ratio_limit = (int(cmd_util.cmd_manager.config['USER']['fa_ratio_min']) / 100) * cmd_util.threshold_multiplier
+      logging.info('fa_ratio_limit {} threshold_multiplier {}'.format(cmd_util.fa_ratio_limit, cmd_util.threshold_multiplier))
       # Re-read config in case of any updates
       cmd_manager.config.read(cmd_manager.config_file)
       await cmd_manager.log_network_status()
