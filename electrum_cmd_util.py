@@ -249,6 +249,7 @@ class APICmdUtil:
   def __init__(self, cmd_manager, wallet_id = None, wallet_password = None):
     self.cmd_manager = cmd_manager
     self.threshold_multiplier = 1
+    self.fa_ratio_limit = None
     self.last_batch = None
     if wallet_id != None:
       self.wallet_id = wallet_id
@@ -319,17 +320,15 @@ class APICmdUtil:
 
       total_amount, total_size, total_fee = await self._get_details_of_unsent(set_password = True)
       if not total_amount:
-        logging.info('{}: No transactions queued'.format(wallet))
+        logging.info('ID {}: No transactions queued'.format(self.wallet_id))
         continue
 
-      fee_to_amount_proportion = int(total_fee * 1.0e8) / total_amount
-      current_fa_ratio = (int(self.cmd_manager.config['USER']['fa_ratio_min']) / 100) * self.threshold_multiplier
+      fa_ratio = int(total_fee * 1.0e8) / total_amount
 
-      logging.info('{}: Current fee to send ratio: {}, current fee to amount: {}'\
-        .format(wallet, current_fa_ratio, fee_to_amount_proportion))
+      logging.info('ID {}: Current fee to send ratio: {}, current fee to amount: {}'\
+        .format(self.wallet_id, self.fa_ratio_limit, fa_ratio))
 
-      if current_fa_ratio >= fee_to_amount_proportion:
-
+      if self.fa_ratio_limit >= fa_ratio:
         with DbManager() as db_manager:
           unsent = db_manager.get_unsent(self.wallet_id)
           outputs = []
@@ -347,9 +346,9 @@ class APICmdUtil:
             self.cmd_manager.wallet.remove_transaction(tx.txid())
             self.cmd_manager.wallet.save_db()
             raise e
-
-    if current_fa_ratio * 2 <= int(self.cmd_manager.config['USER']['fa_ratio_max']) / 100:
-      self.threshold_multiplier *= 2 if self.threshold_multiplier != 1 else 2
+      else:
+        if self.fa_ratio_limit * 2 <= int(self.cmd_manager.config['USER']['fa_ratio_max']) / 100:
+          self.threshold_multiplier *= 2 if self.threshold_multiplier != 1 else 2
 
   @classmethod
   async def get_tx(cls, sr_id):
@@ -411,8 +410,8 @@ class APICmdUtil:
         'sr_ids': txs,
         'amount': '{:.8f}'.format(total_amount / 1.0e8),
         'fee': '{:.8f}'.format(total_fee),
-        'fa_ratio': (int(cmd_util.cmd_manager.config['USER']['fa_ratio_min']) / 100) * cmd_util.threshold_multiplier,
-        'fa_ratio_limit': fee_to_amount_proportion,
+        'fa_ratio': fee_to_amount_proportion,
+        'fa_ratio_limit': cmd_util.fa_ratio_limit,
         'next_send_attempt_in': int(cmd_util.cmd_manager.config['USER']['send_frequency']) * 60 - (int(time.time()) - cmd_util.last_batch)
       }
 
