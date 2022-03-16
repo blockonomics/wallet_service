@@ -29,7 +29,7 @@ def list_wallets():
   os.chdir(config['SYSTEM']['wallet_dir'])
   wallets = sorted(filter(os.path.isfile, os.listdir('.')), key=os.path.getmtime)
   for wallet in wallets:
-    print(wallet)
+    print(wallet.split('_')[1])
 
 def create_wallet(wallet_password):
   cmd_manager = ElectrumCmdUtil()
@@ -51,7 +51,7 @@ def get_wallet_balance(wallet_id, wallet_password):
   print('Connecting to network and syncing wallet...')
   cmd_manager.wait_for_wallet_sync(wallet, True)
   balance = cmd_manager.get_balance(wallet)
-  print('{}\nConfirmed: {}\nUnconfirmed: {}'.format(wallet, balance[0], balance[1]))
+  print('Confirmed: {}\nUnconfirmed: {}'.format(balance[0], balance[1]))
 
 def get_wallet_history(wallet_id, wallet_password):
   cmd_manager = ElectrumCmdUtil()
