@@ -49,7 +49,10 @@ class DbManager:
     return self.session.query(Transactions).filter(Transactions.txid == None, Transactions.wallet_id == wallet_id).all()
 
   def get_tx(self, sr_id):
-    return self.session.query(Transactions).filter(Transactions.sr_id == sr_id).one()
+    try:
+      return self.session.query(Transactions).filter(Transactions.sr_id == sr_id).one()
+    except Exception as e:
+      return {}
 
   def get_all_txs(self, limit):
     return self.session.query(Transactions.txid, Transactions.sr_timestamp, Transactions.sr_id)\
