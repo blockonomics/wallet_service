@@ -248,9 +248,7 @@ class APICmdUtil:
 
   def __init__(self, cmd_manager, wallet_id = None, wallet_password = None):
     self.cmd_manager = cmd_manager
-    self.threshold_multiplier = 1
-    self.fa_ratio_limit = None
-    self.last_batch = None
+    self.wallets = {}
     if wallet_id != None:
       self.wallet_id = wallet_id
       self.cmd_manager.set_wallet(wallet_id, wallet_password)
@@ -318,17 +316,26 @@ class APICmdUtil:
     for wallet in wallets:
       self.wallet_id = wallet.split('_')[1]
 
+      if self.wallet_id not in self.wallets:
+        self.wallets[self.wallet_id] = {}
+        self.wallets[self.wallet_id]['threshold_multiplier'] = 1
+        self.wallets[self.wallet_id]['last_batch_send_try']  = 0
+
       total_amount, total_size, total_fee = await self._get_details_of_unsent(set_password = True)
       if not total_amount:
-        logging.info('ID {}: No transactions queued'.format(self.wallet_id))
+        continue
+
+      current_time = int(time.time())
+      if current_time - self.wallets[self.wallet_id]['last_batch_send_try'] > int(self.cmd_manager.config['USER']['send_frequency']) * 60:
+        self.wallets[self.wallet_id]['last_batch_send_try'] = current_time
+      else:
         continue
 
       fa_ratio = int(total_fee * 1.0e8) / total_amount
+      self.wallets[self.wallet_id]['fa_ratio']  = fa_ratio
+      self.wallets[self.wallet_id]['fa_ratio_limit'] = (int(self.cmd_manager.config['USER']['fa_ratio_min']) / 100) * self.wallets[self.wallet_id]['threshold_multiplier']
 
-      logging.info('ID {}: Current fee to send ratio: {}, current fee to amount: {}'\
-        .format(self.wallet_id, self.fa_ratio_limit, fa_ratio))
-
-      if self.fa_ratio_limit >= fa_ratio:
+      if self.wallets[self.wallet_id]['fa_ratio_limit'] >= self.wallets[self.wallet_id]['fa_ratio']:
         with DbManager() as db_manager:
           unsent = db_manager.get_unsent(self.wallet_id)
           outputs = []
@@ -341,14 +348,16 @@ class APICmdUtil:
           try:
             await self.cmd_manager.async_broadcast(serialized_tx)
             db_manager.update_transactions(self.wallet_id, tx.txid(), total_fee, total_amount)
-            self.threshold_multiplier = 1
+            self.wallets[self.wallet_id]['threshold_multiplier'] = 1
           except Exception as e:
             self.cmd_manager.wallet.remove_transaction(tx.txid())
             self.cmd_manager.wallet.save_db()
             raise e
       else:
-        if self.fa_ratio_limit * 2 <= int(self.cmd_manager.config['USER']['fa_ratio_max']) / 100:
-          self.threshold_multiplier *= 2 if self.threshold_multiplier != 1 else 2
+        if self.wallets[self.wallet_id]['fa_ratio_limit'] * 2 <= int(self.cmd_manager.config['USER']['fa_ratio_max']) / 100:
+          self.wallets[self.wallet_id]['threshold_multiplier'] *= 2 if self.wallets[self.wallet_id]['threshold_multiplier'] != 1 else 2
+
+    logging.info('{}'.format(self.wallets))
 
   @classmethod
   async def get_tx(cls, sr_id):
@@ -358,7 +367,7 @@ class APICmdUtil:
       return {}
     if obj.txid:
       result = {'txid': obj.txid, 'sr_timestamp': obj.sr_timestamp, 'tx_timestamp': obj.tx_timestamp,
-     'addr': obj.address, 'amount': '{:.8f}'.format(obj.amount / 1.0e8), 'tx_fee': obj.fee}
+     'addr': obj.address, 'amount': '{:.8f}'.format(obj.amount / 1.0e8), 'tx_fee': '{:.8f}'.format(obj.fee / 1.0e8)}
     else:
       result = {'sr_timestamp': obj.sr_timestamp,
      'addr': obj.address, 'amount': '{:.8f}'.format(obj.amount / 1.0e8)}
@@ -404,15 +413,19 @@ class APICmdUtil:
 
       total_size = cmd_util.cmd_manager.get_tx_size(outputs = outputs)
       total_fee = cmd_util.cmd_manager.conf.estimate_fee(total_size, allow_fallback_to_static_rates = True) / 1.0e8
-      fee_to_amount_proportion = int(total_fee * 1.0e8) / total_amount
+      fa_ratio = int(total_fee * 1.0e8) / total_amount
+
+      next_attempt = int(cmd_util.cmd_manager.config['USER']['send_frequency']) * 60 - (int(time.time()) - cmd_util.wallets[cmd_util.wallet_id].get('last_batch_send_try'))
+      next_attempt = next_attempt if next_attempt >= 0 else 0
+      fa_ratio_limit = cmd_util.wallets[cmd_util.wallet_id].get('fa_ratio_limit')
 
       queue[wallet] = {
         'sr_ids': txs,
         'amount': '{:.8f}'.format(total_amount / 1.0e8),
         'fee': '{:.8f}'.format(total_fee),
-        'fa_ratio': fee_to_amount_proportion,
-        'fa_ratio_limit': cmd_util.fa_ratio_limit,
-        'next_send_attempt_in': int(cmd_util.cmd_manager.config['USER']['send_frequency']) * 60 - (int(time.time()) - cmd_util.last_batch)
+        'fa_ratio': fa_ratio,
+        'fa_ratio_limit': fa_ratio_limit,
+        'next_send_attempt_in': next_attempt
       }
 
     return queue
