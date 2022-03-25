@@ -319,21 +319,22 @@ class APICmdUtil:
       if self.wallet_id not in self.wallets:
         self.wallets[self.wallet_id] = {}
         self.wallets[self.wallet_id]['threshold_multiplier'] = 1
-        self.wallets[self.wallet_id]['last_batch_send_try']  = 0
+        self.wallets[self.wallet_id]['last_batch_send_try']  = int(time.time())
 
       total_amount, total_size, total_fee = await self._get_details_of_unsent(set_password = True)
       if not total_amount:
+        self.wallets[self.wallet_id]['last_batch_send_try']  = int(time.time())
         continue
+
+      fa_ratio = int(total_fee * 1.0e8) / total_amount
+      self.wallets[self.wallet_id]['fa_ratio']  = fa_ratio
+      self.wallets[self.wallet_id]['fa_ratio_limit'] = (int(self.cmd_manager.config['USER']['fa_ratio_min']) / 100) * self.wallets[self.wallet_id]['threshold_multiplier']
 
       current_time = int(time.time())
       if current_time - self.wallets[self.wallet_id]['last_batch_send_try'] > int(self.cmd_manager.config['USER']['send_frequency']) * 60:
         self.wallets[self.wallet_id]['last_batch_send_try'] = current_time
       else:
         continue
-
-      fa_ratio = int(total_fee * 1.0e8) / total_amount
-      self.wallets[self.wallet_id]['fa_ratio']  = fa_ratio
-      self.wallets[self.wallet_id]['fa_ratio_limit'] = (int(self.cmd_manager.config['USER']['fa_ratio_min']) / 100) * self.wallets[self.wallet_id]['threshold_multiplier']
 
       if self.wallets[self.wallet_id]['fa_ratio_limit'] >= self.wallets[self.wallet_id]['fa_ratio']:
         with DbManager() as db_manager:
@@ -417,7 +418,7 @@ class APICmdUtil:
 
       next_attempt = int(cmd_util.cmd_manager.config['USER']['send_frequency']) * 60 - (int(time.time()) - cmd_util.wallets[cmd_util.wallet_id].get('last_batch_send_try'))
       next_attempt = next_attempt if next_attempt >= 0 else 0
-      fa_ratio_limit = cmd_util.wallets[cmd_util.wallet_id].get('fa_ratio_limit')
+      fa_ratio_limit = (int(cmd_util.cmd_manager.config['USER']['fa_ratio_min']) / 100) * cmd_util.wallets[cmd_util.wallet_id]['threshold_multiplier']
 
       queue[wallet] = {
         'sr_ids': txs,
