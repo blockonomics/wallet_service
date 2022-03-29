@@ -315,26 +315,28 @@ class APICmdUtil:
     wallets = os.listdir('./'+self.cmd_manager.config['SYSTEM']['wallet_dir'])
     for wallet in wallets:
       self.wallet_id = wallet.split('_')[1]
+      current_time = int(time.time())
 
       if self.wallet_id not in self.wallets:
         self.wallets[self.wallet_id] = {}
         self.wallets[self.wallet_id]['threshold_multiplier'] = 1
-        self.wallets[self.wallet_id]['last_batch_send_try']  = int(time.time())
+        self.wallets[self.wallet_id]['last_batch_send_try']  = current_time
+      
+      if current_time - self.wallets[self.wallet_id]['last_batch_send_try'] > int(self.cmd_manager.config['USER']['send_frequency']) * 60:
+        #Only attempt sends at send frequency else exit
+        self.wallets[self.wallet_id]['last_batch_send_try'] = current_time
+      else:
+        continue
 
       total_amount, total_size, total_fee = await self._get_details_of_unsent(set_password = True)
       if not total_amount:
-        self.wallets[self.wallet_id]['last_batch_send_try']  = int(time.time())
+        self.wallets[self.wallet_id]['last_batch_send_try']  = current_time
         continue
 
       fa_ratio = int(total_fee * 1.0e8) / total_amount
       self.wallets[self.wallet_id]['fa_ratio']  = fa_ratio
       self.wallets[self.wallet_id]['fa_ratio_limit'] = (int(self.cmd_manager.config['USER']['fa_ratio_min']) / 100) * self.wallets[self.wallet_id]['threshold_multiplier']
 
-      current_time = int(time.time())
-      if current_time - self.wallets[self.wallet_id]['last_batch_send_try'] > int(self.cmd_manager.config['USER']['send_frequency']) * 60:
-        self.wallets[self.wallet_id]['last_batch_send_try'] = current_time
-      else:
-        continue
 
       if self.wallets[self.wallet_id]['fa_ratio_limit'] >= self.wallets[self.wallet_id]['fa_ratio']:
         with DbManager() as db_manager:
