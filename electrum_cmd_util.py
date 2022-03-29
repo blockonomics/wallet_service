@@ -420,7 +420,7 @@ class APICmdUtil:
       next_attempt = next_attempt if next_attempt >= 0 else 0
       fa_ratio_limit = (int(cmd_util.cmd_manager.config['USER']['fa_ratio_min']) / 100) * cmd_util.wallets[cmd_util.wallet_id]['threshold_multiplier']
 
-      queue[wallet] = {
+      queue[cmd_util.wallet_id] = {
         'sr_ids': txs,
         'amount': '{:.8f}'.format(total_amount / 1.0e8),
         'fee': '{:.8f}'.format(total_fee),
