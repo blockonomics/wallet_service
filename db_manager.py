@@ -60,7 +60,7 @@ class DbManager:
 
   def get_sent_txs(self, limit):
     return self.session.query(Transactions.txid, Transactions.tx_timestamp, Transactions.sr_id)\
-      .filter(Transactions.txid != None).order_by(Transactions.tx_timestamp).limit(limit).all()
+      .filter(Transactions.txid != None).order_by(Transactions.tx_timestamp.desc()).limit(limit).all()
 
   def update_transactions(self, wallet_id, txid, total_fee, total_amount):
     objs = self.get_unsent(wallet_id)
