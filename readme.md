@@ -2,8 +2,8 @@
 This is a lightweight bitcoin wallet service that is easy to install and can be run on a 5$ VPS. 
 
 ## Features
-- Self custody of funds
-- Automatic batching of transactions to minimize fee
+- Complete self custody of funds
+- Automatic batching of send transactions to minimize fee
 - Easy to use REST API interface 
 - Communicates with electrum server for fetching blockchain data 
 - Gets up running instantly [no requirement for waiting days to sync with network] 
@@ -23,19 +23,16 @@ Use virtual environment (python >=3.8)
     * sanic
     * cryptocode
 4. Init DB `python db_model.py`
+5. Do basic config
+    * `python wallet_service_cli.py createWallet <wallet_password>`
+    * `python wallet_service_cli.py setAPIConfig api_password <password>`
+6. Start the service (default port is localhost:8080)
+    * `python wallet_service_api.py`
+
+
+
 
 ## API Documentation
-
-Before using the API, start the server with: `python wallet_service_api.py` Default server will run in localhost PORT 8000
-
-Before using the API for the first time, use the CLI commands to create a wallet and get or set the API password:
-```
-python wallet_service_cli.py createWallet <wallet_password>
-python wallet_service_cli.py getAPIConfig
-python wallet_service_cli.py setAPIConfig api_password <password>
-```
-
-To get CLI help, run `python wallet_service_cli.py -h`
 
 #### POST /api/presend
 Estimate transaction fee, dry run of send.
