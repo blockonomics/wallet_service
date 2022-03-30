@@ -38,7 +38,7 @@ Use virtual environment (python >=3.8)
 Estimate transaction fee, dry run of send.
 
 **Parameters:**
-`{addr, btc_amount, wallet_id, wallet_password, admin_password}`
+`{addr, btc_amount, wallet_id, wallet_password, api_password}`
 
 **Response:**
 ```
@@ -50,7 +50,7 @@ error: 500 HTTP Status / “Error msg”
 Schedules the transaction to be sent when threshold is met.
 
 **Parameters:**
-`{addr, btc_amount, wallet_id, wallet_password, admin_password}`
+`{addr, btc_amount, wallet_id, wallet_password, api_password}`
 
 **Response:**
 ```
