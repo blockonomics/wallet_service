@@ -8,15 +8,8 @@ This is a lightweight bitcoin wallet service that is easy to install and can be 
 - Communicates with electrum server for fetching blockchain data 
 - Gets up running instantly [no requirement for waiting days to sync with network] 
 
-### Requirements:
-
-- Python >= 3.8
-- Electrum 4.1.5
-
-### Installation example on Ubuntu
-
-Use virtual environment
-
+## Installation 
+Use virtual environment (python >=3.8)
 1. Packages:
     * Libsec package is needed `sudo apt install libsecp256k1-dev`
     * Rust compiler may need to be installed depending on current server config: `sudo apt install rustc`
@@ -31,7 +24,7 @@ Use virtual environment
     * cryptocode
 4. Init DB `python db_model.py`
 
-### API
+## API Documentation
 
 Before using the API, start the server with: `python wallet_service_api.py` Default server will run in localhost PORT 8000
 
