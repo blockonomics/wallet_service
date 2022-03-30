@@ -85,8 +85,22 @@ Return the current status of send queue
 **Response:**
 {sr_ids: list of queued send requests, amount: total btc amount scheduled to be sent, fee: current fee required for send, fa_ratio: current fee to amount ratio, fa_ratio_limit: fa_ratio must be below this for send to complete, next_send_attempt_in: Time in seconds when next send will be attempted}
 
+## Command Line
+Various admin functions like creating wallet, getting balance can performed to CLI which can be acessed via
+```python wallet_service_cli.py -h
 
-### API Config
+Available commands:
+getAPIConfig
+setAPIConfig <param> <value>
+listWallets
+createWallet <wallet_password>
+getInfo <wallet_id> <wallet_password>
+getBalance <wallet_id> <wallet_password>
+getHistory <wallet_id> <wallet_password>
+sendToAddress <wallet_id> <wallet_password> <btc_address> <btc_amount>
+```
+
+## API Config
 
 Use CLI to get current values of config or change them:
 ```
