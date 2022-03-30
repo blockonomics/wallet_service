@@ -1,4 +1,12 @@
 # Self hosted bitcoin wallet service
+This is a lightweight bitcoin wallet service that is easy to install and can be run on a 5$ VPS. 
+
+## Features
+- Self custody of funds
+- Automatic batching of transactions to minimize fee
+- Easy to use REST API interface 
+- Communicates with electrum server for fetching blockchain data 
+- Gets up running instantly [no requirement for waiting days to sync with network] 
 
 ### Requirements:
 
