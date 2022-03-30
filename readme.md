@@ -87,8 +87,8 @@ Return the current status of send queue
 
 ## Command Line
 Various admin functions like creating wallet, getting balance can performed to CLI which can be acessed via
-```python wallet_service_cli.py -h
-
+```
+python wallet_service_cli.py -h
 Available commands:
 getAPIConfig
 setAPIConfig <param> <value>
