@@ -9,18 +9,25 @@ CONFIG_FILE = 'config.ini'
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-def get_config():
+def _check_api_password():
   # If no api password exists, create and set a random alphanumeric
-  if config['USER']['api_password'] == None:
+  if config['USER']['api_password'] == '':
     set_config('api_password', 
       ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16)))
+
+def get_config():
+  for key in config['SYSTEM']:
+    print('{} = {}'.format(key, config['SYSTEM'][key]))
   for key in config['USER']:
     print('{} = {}'.format(key, config['USER'][key]))
 
 def set_config(param, value):
-  if param not in config['USER']:
+  if param in config['USER']:
+    config.set('USER', param, value)
+  elif param in config['SYSTEM']:
+    config.set('SYSTEM', param, value)
+  else:
     raise Exception('Config param: {} does not exits'.format(param))
-  config.set('USER', param, value)
   with open(CONFIG_FILE, 'w') as configfile:
     config.write(configfile)
 
@@ -84,6 +91,7 @@ def get_unused(wallet_id, wallet_password):
   print(addr)
 
 if __name__ == '__main__':
+  _check_api_password()
   # Setup argument parser
   ap = argparse.ArgumentParser(
       description='Available commands:\n\n'
