@@ -28,8 +28,10 @@ Use virtual environment (python >=3.8)
 5. Do basic config
     * `python wallet_service_cli.py createWallet <wallet_password>`
     * `python wallet_service_cli.py setAPIConfig api_password <password>`
+    * `python wallet_service_cli.py use_testnet <True/False>`
 6. Start the service (default port is localhost:8080)
     * `python wallet_service_api.py`
+
 
 
 
@@ -110,7 +112,10 @@ python wallet_service_cli.py getAPIConfig
 python wallet_service_cli.py setAPIConfig <param> <value>
 ```
 Available configs are:
-* **api_password**: Password to be used for HTTP API calls - generated randomly by default
+* **wallet_dir**: Directory to store bitcoin wallet keys
+* **use_testnet**: True/False. Use to switch between bitcoin mainnet/testnet
+* **fee_level**: Fee rate levels used for sending. Use high level for more fee (but faster confirmation)
+* **api_password**: Password to be used for HTTP API calls 
 * **fa_ratio_min** : Minimum tolerable fee to send amount ratio - default 5% 
 * **fa_ratio_max** : Maximum tolerable fee to send amount ratio - default 50%
 * **send_frequency** : Send is attempted regularly with this frequency  - default 5 minutes
