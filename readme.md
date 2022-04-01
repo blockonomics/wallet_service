@@ -1,7 +1,7 @@
 # Self hosted bitcoin wallet service
 This is a lightweight bitcoin wallet service that is easy to install and can be run on a 5$ VPS. 
 
-![Wallet logo_v2](https://user-images.githubusercontent.com/22165583/161113280-7e43bd9a-fa21-4cdf-94ed-3f13db32dbdc.png)
+![bitoin wallet logo_v3](https://user-images.githubusercontent.com/22165583/161193392-98442101-9de4-4292-a55e-14ec70a29e8e.png)
 
 ## Features
 - Complete self custody of funds
