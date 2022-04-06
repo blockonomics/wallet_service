@@ -19,16 +19,13 @@ Use virtual environment (python >=3.8)
     * `git clone git://github.com/spesmilo/electrum.git`
     * `cd electrum`
     * `python -m pip install .[fast]`
-3. Install required PIP packages:
-    * sqlalchemy
-    * requests
-    * sanic
-    * cryptocode
+3. Install required python packages:
+    * `pip install sqlalchemy requests sanic cryptocode`
 4. Init DB `python db_model.py`
 5. Do basic config
     * `python wallet_service_cli.py createWallet <wallet_password>`
     * `python wallet_service_cli.py setAPIConfig api_password <password>`
-    * `python wallet_service_cli.py use_testnet <True/False>`
+    * `python wallet_service_cli.py setAPIConfig use_testnet <True/False>`
 6. Start the service (default port is localhost:8080)
     * `python wallet_service_api.py`
 
