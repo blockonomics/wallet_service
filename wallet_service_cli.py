@@ -40,8 +40,10 @@ def list_wallets():
 
 def create_wallet(wallet_password):
   cmd_manager = ElectrumCmdUtil()
-  path, dirs, files = next(os.walk(config['SYSTEM']['wallet_dir']))
-  last_id = len(files)
+  last_id = 0
+  if os.path.exists(config['SYSTEM']['wallet_dir']):
+    path, dirs, files = next(os.walk(config['SYSTEM']['wallet_dir']))
+    last_id = len(files)
   seed, xpub = cmd_manager.create_wallet(last_id, wallet_password)
   print('Wallet created\nID: {}\nPassword: {}\nSeed: {}\nxPub: {}'.format(last_id, wallet_password, xpub, seed))
 
