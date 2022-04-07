@@ -16,11 +16,12 @@ Use virtual environment (python >=3.8)
     * Libsec package is needed `sudo apt install libsecp256k1-dev`
     * Rust compiler may need to be installed depending on current server config: `sudo apt install rustc`
 2. Electrum:
-    * `git clone git://github.com/spesmilo/electrum.git`
+    * `git clone https://github.com/spesmilo/electrum.git`
     * `cd electrum`
     * `python -m pip install .[fast]`
-3. Install required python packages:
-    * `pip install sqlalchemy requests sanic cryptocode`
+3.Wallet Service:
+    * Clone the repository: `git clone https://github.com/blockonomics/wallet_service.git`
+    * Install required python packages: `pip install sqlalchemy requests sanic cryptocode`
 4. Init DB `python db_model.py`
 5. Do basic config
     * `python wallet_service_cli.py createWallet <wallet_password>`
