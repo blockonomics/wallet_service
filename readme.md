@@ -19,7 +19,7 @@ Use virtual environment (python >=3.8)
     * `git clone https://github.com/spesmilo/electrum.git`
     * `cd electrum`
     * `python -m pip install .[fast]`
-3.Wallet Service:
+3. Wallet Service:
     * Clone the repository: `git clone https://github.com/blockonomics/wallet_service.git`
     * Install required python packages: `pip install sqlalchemy requests sanic cryptocode`
 4. Init DB `python db_model.py`
