@@ -118,3 +118,18 @@ Available configs are:
 * **fa_ratio_max** : Maximum tolerable fee to send amount ratio - default 50%
 * **send_frequency** : Send is attempted regularly with this frequency  - default 5 minutes
 
+## API Testing
+
+Create a test wallet with testnet config as True
+```
+python wallet_service_cli.py setAPIConfig use_testnet True
+python wallet_service_cli.py createWallet <wallet_password>
+```
+Adding Test Bitcoin (TBTC) to your test wallet:
+* Change to the electrum directory in your machine
+* Start the electrum in test mode by `./run_electrum --testnet`
+* Import your test wallet. You can find it inside your `wallet_service/wallets/` folder, filename as `wallet_<YOUR_TEST_WALLET_ID>`
+* Create a new Bitcoin Recieving Address from Recieve Tab
+* Copy the address and use this [Bitcoin Faucet](https://bitcoinfaucet.uo1.net/) for sending test bitcoins to your test wallet
+
+Once you have added test bitcoins using testnet you can test the wallet service API's by creating another test wallet and sending bitcoins among those two test wallets.
