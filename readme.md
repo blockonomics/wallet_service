@@ -25,12 +25,13 @@ Use virtual environment (python >=3.8)
 3. Wallet Service:
     * Clone the repository: `git clone https://github.com/blockonomics/wallet_service.git`
     * Install required python packages: `pip install sqlalchemy requests sanic cryptocode`
-4. Init DB `cd wallet_service` `python db_model.py`
-5. Do basic config
+4. Change directory `cd wallet_service`
+5. Init DB `python db_model.py`
+6. Do basic config
     * `python wallet_service_cli.py createWallet <wallet_password>`
     * `python wallet_service_cli.py setAPIConfig api_password <password>`
     * `python wallet_service_cli.py setAPIConfig use_testnet <True/False>`
-6. Start the service (default port is localhost:8080)
+7. Start the service (default port is localhost:8080)
     * `python wallet_service_api.py`
 
 
