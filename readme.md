@@ -19,12 +19,13 @@ Use virtual environment (python >=3.8)
     * `pip install cryptography pyqt5`
     * `wget https://download.electrum.org/4.2.1/Electrum-4.2.1.tar.gz`
     * `tar -xvf Electrum-4.2.1.tar.gz`
+    * `pip install -e Electrum-4.2.1/.`
     * `python Electrum-4.2.1/run_electrum`
-    * `pip install -e .`
+
 3. Wallet Service:
     * Clone the repository: `git clone https://github.com/blockonomics/wallet_service.git`
     * Install required python packages: `pip install sqlalchemy requests sanic cryptocode`
-4. Init DB `python db_model.py`
+4. Init DB `cd wallet_service` `python db_model.py`
 5. Do basic config
     * `python wallet_service_cli.py createWallet <wallet_password>`
     * `python wallet_service_cli.py setAPIConfig api_password <password>`
