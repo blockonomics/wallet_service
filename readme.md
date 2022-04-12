@@ -20,6 +20,7 @@ Use virtual environment (python >=3.8)
     * `wget https://download.electrum.org/4.2.1/Electrum-4.2.1.tar.gz`
     * `tar -xvf Electrum-4.2.1.tar.gz`
     * `python Electrum-4.2.1/run_electrum`
+    * `pip install -e .`
 3. Wallet Service:
     * Clone the repository: `git clone https://github.com/blockonomics/wallet_service.git`
     * Install required python packages: `pip install sqlalchemy requests sanic cryptocode`
