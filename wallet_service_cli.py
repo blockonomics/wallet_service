@@ -102,7 +102,8 @@ if __name__ == '__main__':
                   'getInfo <wallet_id> <wallet_password>\n'
                   'getBalance <wallet_id> <wallet_password>\n'
                   'getHistory <wallet_id> <wallet_password>\n'
-                  'sendToAddress <wallet_id> <wallet_password> <btc_address> <btc_amount>\n',
+                  'sendToAddress <wallet_id> <wallet_password> <btc_address> <btc_amount>\n'
+                  'getUnusedAddress <wallet_id> <wallet_password>\n',
       formatter_class=argparse.RawTextHelpFormatter
     )
   ap.add_argument('command', help='command to run')
@@ -163,9 +164,9 @@ if __name__ == '__main__':
     btc_amount = args['options'][3]
     send_to_address(wallet_id, wallet_password, btc_address, btc_amount)
 
-  elif args['command'] == 'getunused':
+  elif args['command'] == 'getUnusedAddress'.lower():
     if len(args['options']) != 2:
-      ap.error('getrecord takes exactly 2 option: <wallet_id> <wallet_password>')
+      ap.error('getUnusedAddress takes exactly 2 option: <wallet_id> <wallet_password>')
     wallet_id = args['options'][0]
     wallet_password = args['options'][1]
     get_unused(wallet_id, wallet_password)

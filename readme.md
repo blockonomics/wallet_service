@@ -99,6 +99,7 @@ getInfo <wallet_id> <wallet_password>
 getBalance <wallet_id> <wallet_password>
 getHistory <wallet_id> <wallet_password>
 sendToAddress <wallet_id> <wallet_password> <btc_address> <btc_amount>
+getUnusedAddress <wallet_id> <wallet_password>
 ```
 
 ## API Config
