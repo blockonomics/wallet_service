@@ -20,21 +20,17 @@ Use virtual environment (python >=3.8)
     * `wget https://download.electrum.org/4.2.1/Electrum-4.2.1.tar.gz`
     * `tar -xvf Electrum-4.2.1.tar.gz`
     * `pip install -e Electrum-4.2.1/.`
-    * `python Electrum-4.2.1/run_electrum`
-
 3. Wallet Service:
     * Clone the repository: `git clone https://github.com/blockonomics/wallet_service.git`
     * Install required python packages: `pip install sqlalchemy requests sanic cryptocode`
 4. Change directory `cd wallet_service`
 5. Init DB `python db_model.py`
 6. Do basic config
+    * `python wallet_service_cli.py setAPIConfig use_testnet <True/False>`
     * `python wallet_service_cli.py createWallet <wallet_password>`
     * `python wallet_service_cli.py setAPIConfig api_password <password>`
-    * `python wallet_service_cli.py setAPIConfig use_testnet <True/False>`
 7. Start the service (default port is localhost:8080)
     * `python wallet_service_api.py`
-
-
 
 
 
@@ -121,19 +117,3 @@ Available configs are:
 * **fa_ratio_min** : Minimum tolerable fee to send amount ratio - default 5% 
 * **fa_ratio_max** : Maximum tolerable fee to send amount ratio - default 50%
 * **send_frequency** : Send is attempted regularly with this frequency  - default 5 minutes
-
-## API Testing
-
-Create a test wallet with testnet config as True
-```
-python wallet_service_cli.py setAPIConfig use_testnet True
-python wallet_service_cli.py createWallet <wallet_password>
-```
-Adding Test Bitcoin (TBTC) to your test wallet:
-* Change to the electrum directory in your machine
-* Start the electrum in test mode by `./run_electrum --testnet`
-* Import your test wallet. You can find it inside your `wallet_service/wallets/` folder, filename as `wallet_<YOUR_TEST_WALLET_ID>`
-* Create a new Bitcoin Recieving Address from Recieve Tab
-* Copy the address and use this [Bitcoin Faucet](https://bitcoinfaucet.uo1.net/) for sending test bitcoins to your test wallet
-
-Once you have added test bitcoins using testnet you can test the wallet service API's by creating another test wallet and sending bitcoins among those two test wallets.

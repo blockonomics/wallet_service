@@ -312,7 +312,7 @@ class APICmdUtil:
         In case of failure in broadcast, delete transaction from wallet
         history to avoid missing utxo errors
     '''
-    wallets = os.listdir(os.getcwd() + '/' +self.cmd_manager.config['SYSTEM']['wallet_dir'])
+    wallets = os.listdir(os.path.join(os.getcwd(), self.cmd_manager.config['SYSTEM']['wallet_dir']))
     for wallet in wallets:
       self.wallet_id = wallet.split('_')[1]
       current_time = int(time.time())
@@ -392,7 +392,7 @@ class APICmdUtil:
 
   @classmethod
   async def get_queue(cls, cmd_util):
-    wallets = os.listdir(os.getcwd() + '/' + cmd_util.cmd_manager.config['SYSTEM']['wallet_dir'])
+    wallets = os.listdir(os.path.join(os.getcwd(), cmd_util.cmd_manager.config['SYSTEM']['wallet_dir']))
     queue = {}
     for wallet in wallets:
       cmd_util.wallet_id = wallet.split('_')[1]
