@@ -97,15 +97,15 @@ if __name__ == '__main__':
   # Setup argument parser
   ap = argparse.ArgumentParser(
       description='Available commands:\n\n'
-                  'getAPIConfig\n'
-                  'setAPIConfig <param> <value>\n'
-                  'listWallets\n'
-                  'createWallet <wallet_password>\n'
-                  'getInfo <wallet_id> <wallet_password>\n'
-                  'getBalance <wallet_id> <wallet_password>\n'
-                  'getHistory <wallet_id> <wallet_password>\n'
-                  'sendToAddress <wallet_id> <wallet_password> <btc_address> <btc_amount>\n'
-                  'getUnusedAddress <wallet_id> <wallet_password>\n',
+                  'getapiconfig\n'
+                  'setapiconfig <param> <value>\n'
+                  'listwallets\n'
+                  'createwallet <wallet_password>\n'
+                  'getinfo <wallet_id> <wallet_password>\n'
+                  'getbalance <wallet_id> <wallet_password>\n'
+                  'gethistory <wallet_id> <wallet_password>\n'
+                  'sendtoaddress <wallet_id> <wallet_password> <btc_address> <btc_amount>\n'
+                  'getunusedaddress <wallet_id> <wallet_password>\n',
       formatter_class=argparse.RawTextHelpFormatter
     )
   ap.add_argument('command', help='command to run')
@@ -113,62 +113,62 @@ if __name__ == '__main__':
   args = vars(ap.parse_args())
 
   #Loop through commands to see which was called
-  if args['command'].lower() == 'getAPIConfig'.lower():
+  if args['command'].lower() == 'getapiconfig':
     if len(args['options']) != 0:
-      ap.error('getAPIConfig takes no options')
+      ap.error('getapiconfig takes no options')
     get_config()
 
-  elif args['command'].lower() == 'setAPIConfig'.lower():
+  elif args['command'].lower() == 'setapiconfig':
     if len(args['options']) != 2:
-      ap.error('setAPIConfig takes exactly 2 options: <param> <value>')
+      ap.error('setapiconfig takes exactly 2 options: <param> <value>')
     param = args['options'][0]
     value = args['options'][1]
     set_config(param, value)
 
-  elif args['command'].lower() == 'listWallets'.lower():
+  elif args['command'].lower() == 'listwallets':
     if len(args['options']) != 0:
-      ap.error('listWallets takes no options')
+      ap.error('listwallets takes no options')
     list_wallets()
 
-  elif args['command'].lower() == 'createWallet'.lower():
+  elif args['command'].lower() == 'createwallet':
     if len(args['options']) != 1:
-      ap.error('createWallet takes exactly 1 option: <wallet_password>')
+      ap.error('createwallet takes exactly 1 option: <wallet_password>')
     wallet_password = args['options'][0]
     create_wallet(wallet_password)
 
-  elif args['command'].lower() == 'getInfo'.lower():
+  elif args['command'].lower() == 'getinfo':
     if len(args['options']) != 2:
-      ap.error('getInfo takes exactly 2 options: <wallet_id> <wallet_password>')
+      ap.error('getinfo takes exactly 2 options: <wallet_id> <wallet_password>')
     wallet_id = args['options'][0]
     wallet_password = args['options'][1]
     get_wallet_info(wallet_id, wallet_password)
 
-  elif args['command'].lower() == 'getBalance'.lower():
+  elif args['command'].lower() == 'getbalance':
     if len(args['options']) != 2:
-      ap.error('getBalance takes exactly 2 options: <wallet_id> <wallet_password>')
+      ap.error('getbalance takes exactly 2 options: <wallet_id> <wallet_password>')
     wallet_id = args['options'][0]
     wallet_password = args['options'][1]
     get_wallet_balance(wallet_id, wallet_password)
 
-  elif args['command'].lower() == 'getHistory'.lower():
+  elif args['command'].lower() == 'gethistory':
     if len(args['options']) != 2:
-      ap.error('getHistory takes exactly 2 options: <wallet_id> <wallet_password>')
+      ap.error('gethistory takes exactly 2 options: <wallet_id> <wallet_password>')
     wallet_id = args['options'][0]
     wallet_password = args['options'][1]
     get_wallet_history(wallet_id, wallet_password)
 
-  elif args['command'].lower() == 'sendToAddress'.lower():
+  elif args['command'].lower() == 'sendtoaddress':
     if len(args['options']) != 4:
-      ap.error('sendToAddress takes exactly 4 options: <wallet_id> <wallet_password> <btc_address> <btc_amount>')
+      ap.error('sendtoaddress takes exactly 4 options: <wallet_id> <wallet_password> <btc_address> <btc_amount>')
     wallet_id = args['options'][0]
     wallet_password = args['options'][1]
     btc_address = args['options'][2]
     btc_amount = args['options'][3]
     send_to_address(wallet_id, wallet_password, btc_address, btc_amount)
 
-  elif args['command'] == 'getUnusedAddress'.lower():
+  elif args['command'] == 'getunusedaddress':
     if len(args['options']) != 2:
-      ap.error('getUnusedAddress takes exactly 2 option: <wallet_id> <wallet_password>')
+      ap.error('getunusedaddress takes exactly 2 option: <wallet_id> <wallet_password>')
     wallet_id = args['options'][0]
     wallet_password = args['options'][1]
     get_unused(wallet_id, wallet_password)
