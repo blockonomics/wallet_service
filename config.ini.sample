@@ -1,10 +1,11 @@
 [SYSTEM]
 wallet_dir = wallets
-use_testnet = False
+use_testnet = True
 fee_level = 1
 
 [USER]
-api_password =
+api_password = WOkc2S6IpdEsihOr
 fa_ratio_min = 5
 fa_ratio_max = 50
 send_frequency = 5
+

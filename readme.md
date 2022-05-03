@@ -26,6 +26,7 @@ Use virtual environment (python >=3.8)
 4. Change directory `cd wallet_service`
 5. Init DB `python db_model.py`
 6. Do basic config
+    * `cp config.ini.sample config.ini`
     * `python wallet_service_cli.py setapiconfig use_testnet <True/False>`
     * `python wallet_service_cli.py createwallet <wallet_password>`
     * `python wallet_service_cli.py setapiconfig api_password <password>`
