@@ -26,9 +26,9 @@ Use virtual environment (python >=3.8)
 4. Change directory `cd wallet_service`
 5. Init DB `python db_model.py`
 6. Do basic config
-    * `python wallet_service_cli.py setAPIConfig use_testnet <True/False>`
-    * `python wallet_service_cli.py createWallet <wallet_password>`
-    * `python wallet_service_cli.py setAPIConfig api_password <password>`
+    * `python wallet_service_cli.py setapiconfig use_testnet <True/False>`
+    * `python wallet_service_cli.py createwallet <wallet_password>`
+    * `python wallet_service_cli.py setapiconfig api_password <password>`
 7. Start the service (default port is localhost:8080)
     * `python wallet_service_api.py`
 
@@ -92,23 +92,23 @@ Various admin functions like creating wallet, getting balance can performed to C
 ```
 python wallet_service_cli.py -h
 Available commands:
-getAPIConfig
-setAPIConfig <param> <value>
-listWallets
-createWallet <wallet_password>
-getInfo <wallet_id> <wallet_password>
-getBalance <wallet_id> <wallet_password>
-getHistory <wallet_id> <wallet_password>
-sendToAddress <wallet_id> <wallet_password> <btc_address> <btc_amount>
-getUnusedAddress <wallet_id> <wallet_password>
+getapiconfig
+setapiconfig <param> <value>
+listwallets
+createwallet <wallet_password>
+getinfo <wallet_id> <wallet_password>
+getbalance <wallet_id> <wallet_password>
+gethistory <wallet_id> <wallet_password>
+sendtoaddress <wallet_id> <wallet_password> <btc_address> <btc_amount>
+getunusedaddress <wallet_id> <wallet_password>
 ```
 
 ## API Config
 
 Use CLI to get current values of config or change them:
 ```
-python wallet_service_cli.py getAPIConfig
-python wallet_service_cli.py setAPIConfig <param> <value>
+python wallet_service_cli.py getapiconfig
+python wallet_service_cli.py setapiconfig <param> <value>
 ```
 Available configs are:
 * **wallet_dir**: Directory to store bitcoin wallet keys
