@@ -7,7 +7,7 @@ This is a lightweight bitcoin wallet service that is easy to install and can be 
 - Complete self custody of funds
 - Automatic batching of send transactions to minimize fee
 - Easy to use REST API interface 
-- Communicates with electrum nodes internally for fetching blockchain data 
+- Internally uses electrum library to work as an SPV wallet 
 - Gets up running instantly [no requirement for waiting days to sync with network] 
 
 ## Installation 
