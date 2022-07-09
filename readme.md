@@ -120,4 +120,3 @@ Available configs are:
 * **fa_ratio_max** : Maximum tolerable fee to send amount ratio - default 50%
 * **send_frequency** : Send is attempted regularly with this frequency  - default 5 minutes
 
->000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f thread of Blockonomics
