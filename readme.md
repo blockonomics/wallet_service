@@ -11,7 +11,7 @@ This is a lightweight bitcoin wallet service that is easy to install and can be 
 - Gets up running instantly [no requirement for waiting days to sync with network] 
 
 ## Architecture and Magic Sauce
-This is service built on top of electrum-4.2.1 wallet library. So all your funds are in your own custody and security of wallet is guaranteed by robustness of electrum source code
+This is service built on top of electrum-4.2.1 wallet library. So funds/private keys are in your own custody and security of wallet is guaranteed by robustness of [electrum source code](https://electrum.org/#download)
 
 The frequent problem faced with sending bitcoin is that if you just send BTC directly you may end up paying high fee for withdraw (which is exaggerated for low amounts). If you wait and batch all withdraws, customers end up waiting a long time and get irritated. This is what this service does:
 - Never immediately send bitcoin. Adds all send requests to a queue
