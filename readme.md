@@ -15,7 +15,7 @@ This is service built on top of electrum-4.2.1 wallet library. So all your funds
 
 The frequent problem faced with sending bitcoin is that if you just send BTC you may end up paying high fee for withdraw (which is exaggerated for low amounts). If you wait and batch all withdraws, customers end up waiting a long time and get irritated. This is what this service does:
 - Never immediately send bitcoin. Adds all send requests to a queue
-- Batches send requests currently kept in queue and attempt to send them periodicially. Send is done only when total fee/total send amount ratio is less than a given percent (fa_ratio_limit)
+- Batches send requests currently kept in queue and attempt to send them periodicially. Send is done only when (total fee/total send amount) is less than a given percent (fa_ratio_limit)
 - To avoid customers waiting for a long time, fa_ratio_limit increases as sends wait in a queue 
 
 ## Installation 
