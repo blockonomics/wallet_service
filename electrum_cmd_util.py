@@ -306,6 +306,16 @@ class APICmdUtil:
 
     return this_tx_fee, sr_id
 
+  async def get_balance(self):
+    ''' Get wallet balance
+        Syncs wallet to network and returns both confirmed and unconfirmed amounts
+    '''
+    self.cmd_manager.wait_for_wallet_sync(self.wallet, True)
+    balance = self.cmd_manager.get_balance(self.wallet)
+    confirmed = balance[0]
+    unconfirmed = balance[1]
+    return confirmed, unconfirmed
+
   async def send_batch(self):
     ''' Check if batch meets fee to send ratio. In case ratio is met
         create and broadcast the transaction, record changes in DB
