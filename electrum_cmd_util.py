@@ -310,8 +310,8 @@ class APICmdUtil:
     ''' Get wallet balance
         Syncs wallet to network and returns both confirmed and unconfirmed amounts
     '''
-    self.cmd_manager.wait_for_wallet_sync(self.wallet, True)
-    balance = self.cmd_manager.get_balance(self.wallet)
+    self.cmd_manager.wait_for_wallet_sync(self.cmd_manager.wallet, True)
+    balance = self.cmd_manager.get_balance(self.cmd_manager.wallet)
     confirmed = balance[0]
     unconfirmed = balance[1]
     return confirmed, unconfirmed
