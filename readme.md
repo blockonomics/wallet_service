@@ -40,6 +40,14 @@ Use virtual environment (python >=3.8)
     * `python wallet_service_cli.py setapiconfig api_password <password>`
 7. Start the service (default port is localhost:8080)
     * `python wallet_service_api.py`
+8. (Optional) Setup supervisor to run Wallet Service
+    * `sudo apt install supervisord`
+    * Edit `wallet_service_supervisor.conf` to match system configurations
+    * `cp wallet_service_supervisor.conf /etc/supervisor/conf.d/`
+    * `sudo supervisorctl reread`
+    * `sudo supervisorctl update`
+    * `sudo supervisorctl start wallet_service`
+
 
 
 
@@ -95,6 +103,19 @@ Return the current status of send queue
 
 **Response:**
 {sr_ids: list of queued send requests, amount: total btc amount scheduled to be sent, fee: current fee required for send, fa_ratio: current fee to amount ratio, fa_ratio_limit: fa_ratio must be below this for send to complete, next_send_attempt_in: Time in seconds when next send will be attempted}
+
+#### POST /api/get_balance
+Syncs wallet to network and returns current wallet confirmed and unconfirmed balance
+
+**Parameters:**
+`{wallet_id, wallet_password, api_password}`
+
+**Response:**
+```
+confirmed: Confirmed wallet balance
+unconfirmed: Unconfirmed wallet balance
+error: 500 HTTP Status / “Error msg”
+```
 
 ## Command Line
 Various admin functions like creating wallet, getting balance can performed to CLI which can be acessed via
