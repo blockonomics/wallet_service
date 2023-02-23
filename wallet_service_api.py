@@ -54,6 +54,26 @@ async def send(request):
   except Exception as e:
     return json({"error": '{}'.format(e)}, status = 500)
 
+@app.post("/api/get_balance")
+async def get_balance(request):
+  try:
+    args = request.json
+    utils.check_params(args, ['wallet_id', 'wallet_password', 'api_password'])
+
+    wallet_id = args.get('wallet_id')
+    wallet_password = args.get('wallet_password')
+    api_password = args.get('api_password')
+
+    if api_password != cmd_manager.config['USER']['api_password']:
+      raise Exception('Incorrect API password')
+
+    balance_cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
+  
+    confirmed, unconfirmed = await balance_cmd_util.get_balance()
+    return json({"confirmed": confirmed, "unconfirmed": unconfirmed})
+  except Exception as e:
+    return json({"error": '{}'.format(e)}, status = 500)
+
 @app.get("/api/detail/<sr_id>")
 async def detail(request, sr_id):
   try:
