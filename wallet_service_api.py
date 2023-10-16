@@ -36,7 +36,9 @@ async def presend(request):
 async def send(request):
   try:
     args = request.json
-    utils.check_params(args, ['addr', 'btc_amount', 'wallet_id', 'wallet_password', 'api_password'])
+    required_params = ['addr', 'btc_amount', 'wallet_id', 'wallet_password', 'api_password']
+    optional_params = ['include_fee']  # Add 'include_fee' as an optional parameter
+    utils.check_params(args, required_params)
 
     addr = args.get('addr')
     btc_amount = args.get('btc_amount')
@@ -44,15 +46,24 @@ async def send(request):
     wallet_password = args.get('wallet_password')
     api_password = args.get('api_password')
 
+    include_fee = args.get('include_fee', False)  # Get the 'include_fee' parameter, default to False if not provided
+
     if api_password != cmd_manager.config['USER']['api_password']:
       raise Exception('Incorrect API password')
 
     post_cmd_util = APICmdUtil(cmd_manager, wallet_id, wallet_password)
-  
-    estimated_fee, sr_id = await post_cmd_util.send(addr, btc_amount)
-    return json({"estimated_fee": '{:.8f}'.format(estimated_fee), "sr_id": sr_id})
+
+    # If include_fee is True, subtract the estimated_fee from btc_amount
+    if include_fee:
+      estimated_fee = await post_cmd_util.presend(addr, btc_amount)
+      btc_amount -= estimated_fee
+        
+    estimated_fee, sr_id = await post_cmd_util.send(addr, btc_amount)  # Pass include_fee to your send function
+
+
+    return json({"estimated_fee": '{:.8f}'.format(estimated_fee), "sr_id": sr_id, "btc_amount": '{:.8f}'.format(btc_amount)})
   except Exception as e:
-    return json({"error": '{}'.format(e)}, status = 500)
+    return json({"error": '{}'.format(e)}, status=500)
 
 @app.post("/api/get_balance")
 async def get_balance(request):
